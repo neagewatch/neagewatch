@@ -1,0 +1,17 @@
+.
+├── admin
+│   └── page.tsx
+├── company
+│   ├── [slug]
+│   │   └── page.tsx
+│   └── page.tsx
+├── detail
+│   └── [id]
+│       └── page.tsx
+├── favicon.ico
+├── foldersss.txt
+├── globals.css
+├── layout.tsx
+└── page.tsx
+
+6 directories, 9 files

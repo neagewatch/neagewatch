@@ -8,18 +8,21 @@ const supabase = createClient(
 export default async function Page({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   const { data } = await supabase
     .from("price_changes")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!data) {
     return (
       <main style={{ padding: 40, fontFamily: "sans-serif" }}>
         <h2>Not found</h2>
+        <a href="/">← Back</a>
       </main>
     );
   }
@@ -29,7 +32,6 @@ export default async function Page({
 
   return (
     <main style={styles.page}>
-      {/* HERO */}
       <section style={styles.hero}>
         <div style={styles.company}>{data.company}</div>
         <div style={styles.product}>{data.product}</div>
@@ -41,40 +43,28 @@ export default async function Page({
         </div>
 
         <div style={isUp ? styles.badgeUp : styles.badgeDown}>
-          {isUp ? "+" : ""}
-          {diff}円
+          {isUp ? "+" : ""}{diff}円
         </div>
       </section>
 
-      {/* BODY */}
       <section style={styles.card}>
         <h3 style={styles.title}>Price Insight</h3>
-
         <p style={styles.text}>
-          この商品は
-          <b>{Math.abs(diff)}</b>
-          円の
-          <b>{isUp ? "値上げ" : "値下げ"}</b>
-          が発生しました。
+          この商品は<b>{Math.abs(diff)}</b>円の
+          <b>{isUp ? "値上げ" : "値下げ"}</b>が発生しました。
         </p>
-
         <div style={styles.meta}>
           <div>ID: {data.id}</div>
           <div>Slug: {data.slug}</div>
         </div>
       </section>
 
-      {/* BACK */}
-      <a href="/" style={styles.back}>
-        ← Back to dashboard
+      <a href={`/company/${data.slug}`} style={styles.back}>
+        ← {data.company}に戻る
       </a>
     </main>
   );
 }
-
-/* =========================
-   STYLE
-========================= */
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
@@ -84,7 +74,6 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 40,
     color: "#111",
   },
-
   hero: {
     maxWidth: 800,
     margin: "0 auto",
@@ -93,36 +82,12 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 16,
     border: "1px solid #e5e7eb",
   },
-
-  company: {
-    fontSize: 22,
-    fontWeight: 800,
-  },
-
-  product: {
-    marginTop: 6,
-    color: "#6b7280",
-  },
-
-  priceBlock: {
-    marginTop: 20,
-    fontSize: 26,
-    fontWeight: 700,
-  },
-
-  old: {
-    color: "#6b7280",
-  },
-
-  new: {
-    fontWeight: 800,
-  },
-
-  arrow: {
-    margin: "0 10px",
-    color: "#9ca3af",
-  },
-
+  company: { fontSize: 22, fontWeight: 800 },
+  product: { marginTop: 6, color: "#6b7280" },
+  priceBlock: { marginTop: 20, fontSize: 26, fontWeight: 700 },
+  old: { color: "#6b7280" },
+  new: { fontWeight: 800 },
+  arrow: { margin: "0 10px", color: "#9ca3af" },
   badgeUp: {
     marginTop: 16,
     display: "inline-block",
@@ -133,7 +98,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     fontWeight: 700,
   },
-
   badgeDown: {
     marginTop: 16,
     display: "inline-block",
@@ -144,7 +108,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     fontWeight: 700,
   },
-
   card: {
     maxWidth: 800,
     margin: "20px auto",
@@ -153,26 +116,9 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 16,
     border: "1px solid #e5e7eb",
   },
-
-  title: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginBottom: 10,
-  },
-
-  text: {
-    fontSize: 16,
-    lineHeight: 1.7,
-  },
-
-  meta: {
-    marginTop: 20,
-    fontSize: 12,
-    color: "#9ca3af",
-    display: "grid",
-    gap: 6,
-  },
-
+  title: { fontSize: 14, color: "#6b7280", marginBottom: 10 },
+  text: { fontSize: 16, lineHeight: 1.7 },
+  meta: { marginTop: 20, fontSize: 12, color: "#9ca3af", display: "grid", gap: 6 },
   back: {
     display: "block",
     maxWidth: 800,

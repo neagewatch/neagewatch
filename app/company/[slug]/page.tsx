@@ -1,8 +1,10 @@
 "use client";
 
+
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import PriceChart from "@/components/PriceChart";
+import { useRouter } from "next/navigation";
 
 type PriceChange = {
   id: string;
@@ -20,7 +22,7 @@ export default function CompanyPage({
 }) {
   // ✅ ここが修正ポイント（Promiseをunwrap）
   const { slug } = React.use(params);
-
+  const router = useRouter();  // ← 追加
   const [data, setData] = useState<PriceChange[]>([]);
 
   // =====================
@@ -161,28 +163,31 @@ const fetchData = async () => {
 
           <div style={styles.list}>
             {enriched.map((item) => (
-              <div key={item.id} style={styles.row}>
-                <div>
-                  <div style={styles.product}>{item.product}</div>
-                  <div style={styles.company}>{item.company}</div>
-                </div>
+  <div
+    key={item.id}
+    style={{ ...styles.row, cursor: "pointer" }}
+    onClick={() => router.push(`/detail/${item.id}`)}
+  >
+    <div>
+      <div style={styles.product}>{item.product}</div>
+      <div style={styles.company}>{item.company}</div>
+    </div>
 
-                <div style={styles.priceBox}>
-                  {item.old_price} → <b>{item.new_price}</b>
-
-                  <span
-                    style={{
-                      marginLeft: 8,
-                      fontSize: 12,
-                      color: item.diff > 0 ? "#e11d48" : "#16a34a",
-                    }}
-                  >
-                    {item.diff > 0 ? "+" : ""}
-                    {(item.percent ?? 0).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            ))}
+    <div style={styles.priceBox}>
+      {item.old_price} → <b>{item.new_price}</b>
+      <span
+        style={{
+          marginLeft: 8,
+          fontSize: 12,
+          color: item.diff > 0 ? "#e11d48" : "#16a34a",
+        }}
+      >
+        {item.diff > 0 ? "+" : ""}
+        {(item.percent ?? 0).toFixed(1)}%
+      </span>
+    </div>
+  </div>
+))}
           </div>
         </div>
       </div>
