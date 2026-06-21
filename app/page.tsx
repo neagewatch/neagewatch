@@ -12,16 +12,26 @@ type PriceChange = {
   slug: string;
   product: string;
   old_price: number;
-  change_date?: string;
-  article_date?: string;
   new_price: number;
-  change_date?: string;
+  change_type?: string;
+  source_url?: string;
+  article_text?: string;
   article_date?: string;
   change_date?: string;
-  article_date?: string;
-  change_date?: string;
-  article_date?: string;
 };
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}`;
+}
+
+function displayDate(item: PriceChange): string {
+  if (item.change_date) return formatDate(item.change_date);
+  if (item.article_date) return formatDate(item.article_date);
+  return "";
+}
 
 export default function Home() {
   const [data, setData] = useState<PriceChange[]>([]);
@@ -173,31 +183,37 @@ export default function Home() {
             display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8,
             scrollbarWidth: "thin",
           }}>
-            {enriched.slice(0, 10).map((item) => (
-              <div key={item.id} onClick={() => router.push(`/company/${item.slug}`)} style={{
-                minWidth: 220, background: "var(--surface)", border: "1px solid var(--border)",
-                borderRadius: "var(--radius-lg)", padding: "14px 16px", cursor: "pointer",
-                flexShrink: 0, transition: "box-shadow var(--transition)",
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>{item.company}</div>
-                  <span style={{
-                    fontSize: 10, padding: "2px 6px", borderRadius: 8,
-                    background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag],
-                    fontWeight: 700,
-                  }}>{item.tag}</span>
+            {enriched.slice(0, 10).map((item) => {
+              const dateLabel = displayDate(item);
+              return (
+                <div key={item.id} onClick={() => router.push(`/company/${item.slug}`)} style={{
+                  minWidth: 220, background: "var(--surface)", border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-lg)", padding: "14px 16px", cursor: "pointer",
+                  flexShrink: 0, transition: "box-shadow var(--transition)",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>{item.company}</div>
+                    <span style={{
+                      fontSize: 10, padding: "2px 6px", borderRadius: 8,
+                      background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag],
+                      fontWeight: 700,
+                    }}>{item.tag}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>{item.product}</div>
+                  {dateLabel && (
+                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>📅 {dateLabel}</div>
+                  )}
+                  <div style={{ marginTop: 10, fontSize: 14 }}>
+                    <span style={{ color: "var(--text-muted)" }}>{item.old_price}円</span>
+                    <span style={{ margin: "0 4px", color: "var(--text-muted)" }}>→</span>
+                    <span style={{ fontWeight: 800 }}>{item.new_price}円</span>
+                  </div>
+                  <span className={item.diff > 0 ? "badge-up" : "badge-down"} style={{ marginTop: 8, display: "inline-block" }}>
+                    {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
+                  </span>
                 </div>
-                <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>{item.product}</div>
-                <div style={{ marginTop: 10, fontSize: 14 }}>
-                  <span style={{ color: "var(--text-muted)" }}>{item.old_price}円</span>
-                  <span style={{ margin: "0 4px", color: "var(--text-muted)" }}>→</span>
-                  <span style={{ fontWeight: 800 }}>{item.new_price}円</span>
-                </div>
-                <span className={item.diff > 0 ? "badge-up" : "badge-down"} style={{ marginTop: 8, display: "inline-block" }}>
-                  {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -308,31 +324,37 @@ export default function Home() {
           ) : filtered.length === 0 ? (
             <div style={{ padding: 20, color: "var(--text-muted)" }}>データがありません</div>
           ) : (
-            filtered.map((item) => (
-              <div key={item.id} className="list-row" onClick={() => router.push(`/company/${item.slug}`)}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>{item.company}</span>
-                    <span style={{
-                      fontSize: 10, padding: "2px 6px", borderRadius: 8,
-                      background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag],
-                      fontWeight: 700,
-                    }}>{item.tag}</span>
+            filtered.map((item) => {
+              const dateLabel = displayDate(item);
+              return (
+                <div key={item.id} className="list-row" onClick={() => router.push(`/company/${item.slug}`)}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{item.company}</span>
+                      <span style={{
+                        fontSize: 10, padding: "2px 6px", borderRadius: 8,
+                        background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag],
+                        fontWeight: 700,
+                      }}>{item.tag}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                      {item.product}
+                      {dateLabel && <span> · 📅 {dateLabel}</span>}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{item.product}{item.change_date && ` · 📅${item.change_date}`}</div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 14 }}>
-                    <span style={{ color: "var(--text-muted)" }}>{item.old_price}円</span>
-                    <span style={{ margin: "0 6px", color: "var(--text-muted)" }}>→</span>
-                    <span style={{ fontWeight: 700 }}>{item.new_price}円</span>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 14 }}>
+                      <span style={{ color: "var(--text-muted)" }}>{item.old_price}円</span>
+                      <span style={{ margin: "0 6px", color: "var(--text-muted)" }}>→</span>
+                      <span style={{ fontWeight: 700 }}>{item.new_price}円</span>
+                    </div>
+                    <span className={item.diff > 0 ? "badge-up" : "badge-down"}>
+                      {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
+                    </span>
                   </div>
-                  <span className={item.diff > 0 ? "badge-up" : "badge-down"}>
-                    {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
-                  </span>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

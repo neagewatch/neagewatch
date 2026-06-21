@@ -12,8 +12,25 @@ type PriceChange = {
   product: string;
   old_price: number;
   new_price: number;
+  change_type?: string;
+  source_url?: string;
+  article_text?: string;
+  article_date?: string;
   change_date?: string;
 };
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}`;
+}
+
+function displayDate(item: PriceChange): string {
+  if (item.change_date) return formatDate(item.change_date);
+  if (item.article_date) return formatDate(item.article_date);
+  return "";
+}
 
 export default function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = React.use(params);
@@ -120,24 +137,36 @@ export default function CompanyPage({ params }: { params: Promise<{ slug: string
         <div style={{ padding: "16px 20px 8px" }}>
           <div className="section-label">価格変動履歴</div>
         </div>
-        {enriched.map((item) => (
-          <div key={item.id} className="list-row" onClick={() => router.push(`/detail/${item.id}`)}>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{item.product}</div>
-              {item.change_date && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>📅 {item.change_date}</div>}
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 14 }}>
-                <span style={{ color: "var(--text-muted)" }}>{item.old_price}円</span>
-                <span style={{ margin: "0 6px", color: "var(--text-muted)" }}>→</span>
-                <span style={{ fontWeight: 700 }}>{item.new_price}円</span>
+        {enriched.map((item) => {
+          const dateLabel = displayDate(item);
+          return (
+            <div key={item.id} className="list-row" onClick={() => router.push(`/detail/${item.id}`)}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{item.product}</div>
+                {dateLabel && (
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                    📅 {dateLabel}
+                    {item.change_date && item.article_date && item.change_date !== item.article_date && (
+                      <span style={{ marginLeft: 8, fontSize: 10, color: "var(--text-muted)" }}>
+                        (記事: {formatDate(item.article_date)})
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-              <span className={item.diff > 0 ? "badge-up" : "badge-down"}>
-                {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
-              </span>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 14 }}>
+                  <span style={{ color: "var(--text-muted)" }}>{item.old_price}円</span>
+                  <span style={{ margin: "0 6px", color: "var(--text-muted)" }}>→</span>
+                  <span style={{ fontWeight: 700 }}>{item.new_price}円</span>
+                </div>
+                <span className={item.diff > 0 ? "badge-up" : "badge-down"}>
+                  {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

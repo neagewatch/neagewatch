@@ -1,5 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { COMPANIES } from "@/lib/companies";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "企業一覧",
+  description: "NeageWatchに登録されている全企業の一覧。食品メーカー、外食チェーン、コンビニ、小売店、飲料メーカーなどの価格変動データを確認できます。",
+  openGraph: {
+    title: "企業一覧 | NeageWatch",
+    description: "値上げ・値下げ情報を追跡中の全企業一覧",
+  },
+};
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

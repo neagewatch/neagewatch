@@ -11,8 +11,19 @@ type PriceChange = {
   product: string;
   old_price: number;
   new_price: number;
+  change_type?: string;
+  source_url?: string;
+  article_text?: string;
+  article_date?: string;
   change_date?: string;
 };
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}`;
+}
 
 export default function AdminPage() {
   const [data, setData] = useState<PriceChange[]>([]);
@@ -21,6 +32,7 @@ export default function AdminPage() {
   const [oldPrice, setOldPrice] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [changeDate, setChangeDate] = useState(new Date().toISOString().split("T")[0]);
+  const [articleDate, setArticleDate] = useState(new Date().toISOString().split("T")[0]);
   const [msg, setMsg] = useState("");
 
   const fetchData = async () => {
@@ -41,7 +53,7 @@ export default function AdminPage() {
       old_price: Number(oldPrice), new_price: Number(newPrice),
       change_type: Number(newPrice) > Number(oldPrice) ? "increase" : "decrease",
       source_url: "manual", article_text: "手動入力",
-      article_date: new Date().toISOString().split("T")[0],
+      article_date: articleDate,
       change_date: changeDate,
     });
 
@@ -81,7 +93,16 @@ export default function AdminPage() {
           <input placeholder="商品名" value={product} onChange={(e) => setProduct(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
           <input placeholder="旧価格" type="number" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} style={{ ...inputStyle, width: 100 }} />
           <input placeholder="新価格" type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} style={{ ...inputStyle, width: 100 }} />
-          <input type="date" value={changeDate} onChange={(e) => setChangeDate(e.target.value)} style={{ ...inputStyle, width: 150 }} />
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>値上げ日:</label>
+            <input type="date" value={changeDate} onChange={(e) => setChangeDate(e.target.value)} style={{ ...inputStyle, width: 150 }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>記事日:</label>
+            <input type="date" value={articleDate} onChange={(e) => setArticleDate(e.target.value)} style={{ ...inputStyle, width: 150 }} />
+          </div>
           <button onClick={handleAdd} style={{
             padding: "10px 24px", background: "var(--accent)", color: "#fff",
             border: "none", borderRadius: "var(--radius)", cursor: "pointer",
@@ -108,7 +129,11 @@ export default function AdminPage() {
               <div style={{ fontWeight: 600, fontSize: 14 }}>{item.company}</div>
               <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
                 {item.product} · {item.old_price}円 → {item.new_price}円
-                {item.change_date && ` · 📅${item.change_date}`}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                {item.change_date && <span>📅 値上げ日: {formatDate(item.change_date)}</span>}
+                {item.change_date && item.article_date && <span> · </span>}
+                {item.article_date && <span>📰 記事日: {formatDate(item.article_date)}</span>}
               </div>
             </div>
             <button onClick={() => handleDelete(item.id)} style={{
