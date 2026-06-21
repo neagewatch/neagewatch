@@ -52,21 +52,29 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       <div className="card">
         <div className="section-label">詳細情報</div>
-        <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+        <div style={{ marginTop: 12, display: "grid", gap: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "10px 0", borderBottom: "1px solid var(--border-light)" }}>
             <span style={{ color: "var(--text-muted)" }}>変動タイプ</span>
             <span style={{ fontWeight: 600 }}>{isUp ? "値上げ" : "値下げ"}</span>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "10px 0", borderBottom: "1px solid var(--border-light)" }}>
             <span style={{ color: "var(--text-muted)" }}>企業</span>
             <span style={{ fontWeight: 600 }}>{data.company}</span>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
-            <span style={{ color: "var(--text-muted)" }}>Slug</span>
-            <span style={{ fontWeight: 600 }}>{data.slug}</span>
-          </div>
+          {data.change_date && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "10px 0", borderBottom: "1px solid var(--border-light)" }}>
+              <span style={{ color: "var(--text-muted)" }}>値上げ日</span>
+              <span style={{ fontWeight: 600 }}>📅 {data.change_date}</span>
+            </div>
+          )}
+          {data.article_date && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "10px 0", borderBottom: "1px solid var(--border-light)" }}>
+              <span style={{ color: "var(--text-muted)" }}>記事公開日</span>
+              <span style={{ fontWeight: 600 }}>{data.article_date}</span>
+            </div>
+          )}
           {data.source_url && data.source_url !== "manual" && (
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "10px 0" }}>
               <span style={{ color: "var(--text-muted)" }}>ソース</span>
               <a href={data.source_url} target="_blank" style={{ color: "var(--accent)", fontWeight: 600 }}>記事を見る →</a>
             </div>

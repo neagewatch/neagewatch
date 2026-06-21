@@ -12,6 +12,7 @@ type PriceChange = {
   product: string;
   old_price: number;
   new_price: number;
+  change_date?: string;
 };
 
 export default function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -123,6 +124,7 @@ export default function CompanyPage({ params }: { params: Promise<{ slug: string
           <div key={item.id} className="list-row" onClick={() => router.push(`/detail/${item.id}`)}>
             <div>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{item.product}</div>
+              {item.change_date && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>📅 {item.change_date}</div>}
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: 14 }}>
