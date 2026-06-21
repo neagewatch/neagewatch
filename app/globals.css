@@ -200,11 +200,6 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-muted);
 }
 
-
-  .grid-3 { grid-template-columns: 1fr; }
-  .nav-links { gap: 16px; }
-}
-
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
