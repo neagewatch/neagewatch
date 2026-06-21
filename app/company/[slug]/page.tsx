@@ -2,7 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import PriceChart from "@/components/PriceChart";
-import { useEffect, useMemo, useState, use } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type PriceChange = {
   id: string;
@@ -18,8 +18,7 @@ export default function CompanyPage({
 }: {
   params: { slug: string };
 }) {
-  const resolvedParams = use(params);
-  const slug = resolvedParams.slug;
+  const slug = params.slug;
 
   const [data, setData] = useState<PriceChange[]>([]);
 
@@ -34,7 +33,7 @@ export default function CompanyPage({
         .eq("slug", slug)
         .order("id", { ascending: false });
 
-      if (!error) setData(data || []);
+      if (!error) setData((data as PriceChange[]) || []);
     };
 
     fetchData();
@@ -115,10 +114,7 @@ export default function CompanyPage({
       <div style={styles.container}>
         {/* HEADER */}
         <div style={styles.header}>
-          <h1 style={styles.title}>
-            {enriched[0]?.company}
-          </h1>
-
+          <h1 style={styles.title}>{enriched[0]?.company}</h1>
           <p style={styles.subText}>{insight}</p>
         </div>
 
@@ -161,12 +157,8 @@ export default function CompanyPage({
             {enriched.map((item) => (
               <div key={item.id} style={styles.row}>
                 <div>
-                  <div style={styles.product}>
-                    {item.product}
-                  </div>
-                  <div style={styles.company}>
-                    {item.company}
-                  </div>
+                  <div style={styles.product}>{item.product}</div>
+                  <div style={styles.company}>{item.company}</div>
                 </div>
 
                 <div style={styles.priceBox}>
@@ -176,8 +168,7 @@ export default function CompanyPage({
                     style={{
                       marginLeft: 8,
                       fontSize: 12,
-                      color:
-                        item.diff > 0 ? "#e11d48" : "#16a34a",
+                      color: item.diff > 0 ? "#e11d48" : "#16a34a",
                     }}
                   >
                     {item.diff > 0 ? "+" : ""}
@@ -194,7 +185,7 @@ export default function CompanyPage({
 }
 
 /* =====================
-   STYLE（SaaS復活版）
+   STYLE
 ===================== */
 
 const styles: Record<string, React.CSSProperties> = {
@@ -204,11 +195,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#f6f7f9",
     minHeight: "100vh",
   },
-
-  loading: {
-    padding: 40,
-  },
-
+  loading: { padding: 40 },
   container: {
     maxWidth: 900,
     margin: "0 auto",
@@ -217,66 +204,41 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 24,
     boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
   },
-
-  header: {
-    marginBottom: 20,
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: 800,
-  },
-
-  subText: {
-    marginTop: 8,
-    color: "#666",
-  },
-
+  header: { marginBottom: 20 },
+  title: { fontSize: 28, fontWeight: 800 },
+  subText: { marginTop: 8, color: "#666" },
   kpiRow: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
     gap: 12,
     marginBottom: 24,
   },
-
   card: {
     padding: 12,
     border: "1px solid #e5e7eb",
     borderRadius: 12,
     background: "#fff",
   },
-
-  label: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 4,
-  },
-
-  section: {
-    marginTop: 24,
-  },
-
+  label: { fontSize: 12, color: "#666", marginBottom: 4 },
+  section: { marginTop: 24 },
   sectionTitle: {
     fontSize: 14,
     fontWeight: 700,
     marginBottom: 10,
     color: "#555",
   },
-
   chartBox: {
     background: "#fff",
     border: "1px solid #e5e7eb",
     borderRadius: 12,
     padding: 12,
   },
-
   list: {
     borderTop: "1px solid #eee",
     background: "#fff",
     borderRadius: 12,
     overflow: "hidden",
   },
-
   row: {
     padding: 12,
     borderBottom: "1px solid #eee",
@@ -284,17 +246,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     alignItems: "center",
   },
-
-  product: {
-    fontWeight: 600,
-  },
-
-  company: {
-    fontSize: 12,
-    color: "#888",
-  },
-
-  priceBox: {
-    textAlign: "right",
-  },
+  product: { fontWeight: 600 },
+  company: { fontSize: 12, color: "#888" },
+  priceBox: { textAlign: "right" },
 };
