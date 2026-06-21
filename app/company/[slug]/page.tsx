@@ -27,15 +27,20 @@ export default function CompanyPage({
   // データ取得
   // =====================
   useEffect(() => {
-    const fetchData = async () => {
-      const { data, error } = await supabase
-        .from("price_changes")
-        .select("*")
-        .eq("slug", slug)
-        .order("id", { ascending: false });
+const fetchData = async () => {
+  console.log("slug:", slug); // ← 追加①
 
-      if (!error) setData((data as PriceChange[]) || []);
-    };
+  const { data, error } = await supabase
+    .from("price_changes")
+    .select("*")
+    .eq("slug", slug)
+    .order("id", { ascending: false });
+
+  console.log("data:", data);   // ← 追加②
+  console.log("error:", error); // ← 追加③
+
+  if (!error) setData((data as PriceChange[]) || []);
+};
 
     fetchData();
   }, [slug]);
