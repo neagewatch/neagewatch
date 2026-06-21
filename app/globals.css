@@ -210,3 +210,8 @@ a { color: inherit; text-decoration: none; }
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
