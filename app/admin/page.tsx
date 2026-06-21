@@ -11,6 +11,7 @@ type PriceChange = {
   product: string;
   old_price: number;
   new_price: number;
+  change_date?: string;
 };
 
 export default function AdminPage() {
@@ -19,6 +20,7 @@ export default function AdminPage() {
   const [product, setProduct] = useState("");
   const [oldPrice, setOldPrice] = useState("");
   const [newPrice, setNewPrice] = useState("");
+  const [changeDate, setChangeDate] = useState(new Date().toISOString().split("T")[0]);
   const [msg, setMsg] = useState("");
 
   const fetchData = async () => {
@@ -39,6 +41,8 @@ export default function AdminPage() {
       old_price: Number(oldPrice), new_price: Number(newPrice),
       change_type: Number(newPrice) > Number(oldPrice) ? "increase" : "decrease",
       source_url: "manual", article_text: "手動入力",
+      article_date: new Date().toISOString().split("T")[0],
+      change_date: changeDate,
     });
 
     if (error) { setMsg("エラー: " + error.message); return; }
@@ -63,7 +67,7 @@ export default function AdminPage() {
   return (
     <div className="container">
       <h1 className="page-title">管理画面</h1>
-      <p className="page-sub">データの追加・削除</p>
+      <p className="page-sub">データの追加・削除・日付修正</p>
 
       <div className="card" style={{ marginBottom: 28 }}>
         <div className="section-label">データ追加</div>
@@ -77,6 +81,7 @@ export default function AdminPage() {
           <input placeholder="商品名" value={product} onChange={(e) => setProduct(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
           <input placeholder="旧価格" type="number" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} style={{ ...inputStyle, width: 100 }} />
           <input placeholder="新価格" type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} style={{ ...inputStyle, width: 100 }} />
+          <input type="date" value={changeDate} onChange={(e) => setChangeDate(e.target.value)} style={{ ...inputStyle, width: 150 }} />
           <button onClick={handleAdd} style={{
             padding: "10px 24px", background: "var(--accent)", color: "#fff",
             border: "none", borderRadius: "var(--radius)", cursor: "pointer",
@@ -102,7 +107,8 @@ export default function AdminPage() {
             <div>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{item.company}</div>
               <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
-                {item.product} ・ {item.old_price}円 → {item.new_price}円
+                {item.product} · {item.old_price}円 → {item.new_price}円
+                {item.change_date && ` · 📅${item.change_date}`}
               </div>
             </div>
             <button onClick={() => handleDelete(item.id)} style={{

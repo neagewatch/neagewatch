@@ -12,7 +12,15 @@ type PriceChange = {
   slug: string;
   product: string;
   old_price: number;
+  change_date?: string;
+  article_date?: string;
   new_price: number;
+  change_date?: string;
+  article_date?: string;
+  change_date?: string;
+  article_date?: string;
+  change_date?: string;
+  article_date?: string;
 };
 
 export default function Home() {
@@ -311,7 +319,7 @@ export default function Home() {
                       fontWeight: 700,
                     }}>{item.tag}</span>
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{item.product}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{item.product}{item.change_date && ` · 📅${item.change_date}`}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontSize: 14 }}>
