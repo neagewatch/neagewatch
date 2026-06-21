@@ -65,33 +65,14 @@ export default async function Page({
 }
 
 const styles: Record<string, React.CSSProperties> = {
-<<<<<<< HEAD
   page: { minHeight: "100vh", background: "#f6f7f9", fontFamily: "ui-sans-serif, system-ui", padding: 40, color: "#111" },
   hero: { maxWidth: 800, margin: "0 auto", background: "#fff", padding: 24, borderRadius: 16, border: "1px solid #e5e7eb" },
-=======
-  page: {
-    minHeight: "100vh",
-    background: "#f6f7f9",
-    fontFamily: "ui-sans-serif, system-ui",
-    padding: 40,
-    color: "#111",
-  },
-  hero: {
-    maxWidth: 800,
-    margin: "0 auto",
-    background: "#fff",
-    padding: 24,
-    borderRadius: 16,
-    border: "1px solid #e5e7eb",
-  },
->>>>>>> 663755b (企業一覧ページ改善)
   company: { fontSize: 22, fontWeight: 800 },
   product: { marginTop: 6, color: "#6b7280" },
   priceBlock: { marginTop: 20, fontSize: 26, fontWeight: 700 },
   old: { color: "#6b7280" },
   new: { fontWeight: 800 },
   arrow: { margin: "0 10px", color: "#9ca3af" },
-<<<<<<< HEAD
   badgeUp: { marginTop: 16, display: "inline-block", padding: "6px 10px", background: "#fee2e2", color: "#b91c1c", borderRadius: 999, fontSize: 12, fontWeight: 700 },
   badgeDown: { marginTop: 16, display: "inline-block", padding: "6px 10px", background: "#dcfce7", color: "#166534", borderRadius: 999, fontSize: 12, fontWeight: 700 },
   card: { maxWidth: 800, margin: "20px auto", background: "#fff", padding: 24, borderRadius: 16, border: "1px solid #e5e7eb" },
@@ -100,45 +81,3 @@ const styles: Record<string, React.CSSProperties> = {
   meta: { marginTop: 20, fontSize: 12, color: "#9ca3af", display: "grid", gap: 6 },
   back: { display: "block", maxWidth: 800, margin: "30px auto 0", color: "#2563eb", textDecoration: "none", fontWeight: 600 },
 };
-=======
-  badgeUp: {
-    marginTop: 16,
-    display: "inline-block",
-    padding: "6px 10px",
-    background: "#fee2e2",
-    color: "#b91c1c",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 700,
-  },
-  badgeDown: {
-    marginTop: 16,
-    display: "inline-block",
-    padding: "6px 10px",
-    background: "#dcfce7",
-    color: "#166534",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 700,
-  },
-  card: {
-    maxWidth: 800,
-    margin: "20px auto",
-    background: "#fff",
-    padding: 24,
-    borderRadius: 16,
-    border: "1px solid #e5e7eb",
-  },
-  title: { fontSize: 14, color: "#6b7280", marginBottom: 10 },
-  text: { fontSize: 16, lineHeight: 1.7 },
-  meta: { marginTop: 20, fontSize: 12, color: "#9ca3af", display: "grid", gap: 6 },
-  back: {
-    display: "block",
-    maxWidth: 800,
-    margin: "30px auto 0",
-    color: "#2563eb",
-    textDecoration: "none",
-    fontWeight: 600,
-  },
-};
->>>>>>> 663755b (企業一覧ページ改善)
