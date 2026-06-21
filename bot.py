@@ -68,6 +68,7 @@ COMPANY_MASTER = {
     "無印":            {"name": "無印良品",        "slug": "muji"},
     "スターバックス":  {"name": "スターバックス",  "slug": "starbucks"},
     "スタバ":          {"name": "スターバックス",  "slug": "starbucks"},
+    "ロッテ":          {"name": "ロッテ",          "slug": "lotte"},
 }
 
 def detect_company(text: str) -> dict:
@@ -77,14 +78,25 @@ def detect_company(text: str) -> dict:
     return {"name": "Unknown", "slug": "unknown"}
 
 # =====================
-# RSS
+# RSS（複数ソース）
 # =====================
 
-URL = "https://news.yahoo.co.jp/rss/topics/business.xml"
+RSS_URLS = [
+    "https://news.yahoo.co.jp/rss/topics/business.xml",
+    "https://www3.nhk.or.jp/rss/news/cat5.xml",  # NHK経済
+]
 
-res = requests.get(URL)
-soup = BeautifulSoup(res.content, "xml")
-items = soup.find_all("item")
+all_items = []
+
+for rss_url in RSS_URLS:
+    try:
+        res = requests.get(rss_url, timeout=10)
+        soup = BeautifulSoup(res.content, "xml")
+        items = soup.find_all("item")
+        all_items.extend(items)
+        print(f"RSS取得OK: {rss_url} ({len(items)}件)")
+    except Exception as e:
+        print(f"RSS取得エラー: {rss_url} - {e}")
 
 # =====================
 # KEYWORDS
@@ -96,7 +108,7 @@ keywords = ["値上げ", "値下げ", "価格改定", "価格変更", "半額", 
 # LOOP
 # =====================
 
-for item in items:
+for item in all_items:
     title = item.title.text.replace(" - Yahoo!ニュース", "")
     link = item.link.text
 
@@ -152,8 +164,12 @@ for item in items:
         product_name = product_name.replace(k, "")
     product_name = product_name.strip()
 
-    # 価格抽出（円表記を優先）
+# 価格抽出（本文 → タイトルの順で試みる）
     prices = re.findall(r"(\d+)円", article_text)
+
+    if len(prices) < 2:
+        # タイトルからも試みる
+        prices = re.findall(r"(\d+)円", title)
 
     if len(prices) < 2:
         print("価格情報なし → スキップ")
@@ -161,7 +177,6 @@ for item in items:
 
     old_price = int(prices[0])
     new_price = int(prices[1])
-
 # 重複チェック
     existing = supabase.table("price_changes").select("id").eq("source_url", link).execute()
 
