@@ -130,7 +130,7 @@ export default function Home() {
               fontSize: 11, fontWeight: 800, letterSpacing: 1,
             }}>LIVE</span>
           </div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, letterSpacing: -1, marginBottom: 4 }}>
+          <h1 style={{ fontSize: "clamp(20px, 5vw, 26px)", fontWeight: 900, letterSpacing: -1, marginBottom: 4 }}>
             値上げウォッチ
           </h1>
           <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
@@ -224,7 +224,7 @@ export default function Home() {
         {/* 業界別 */}
         <div className="card" style={{ marginBottom: 28 }}>
           <div className="section-label">業界別サマリー</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, marginTop: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginTop: 12 }}>
             {categoryData.map((cat) => (
               <div key={cat.name} style={{
                 background: "var(--bg)", borderRadius: "var(--radius)",
