@@ -1,8 +1,8 @@
 "use client";
 
+import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import PriceChart from "@/components/PriceChart";
-import { useEffect, useMemo, useState } from "react";
 
 type PriceChange = {
   id: string;
@@ -16,9 +16,10 @@ type PriceChange = {
 export default function CompanyPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const slug = params.slug;
+  // ✅ ここが修正ポイント（Promiseをunwrap）
+  const { slug } = React.use(params);
 
   const [data, setData] = useState<PriceChange[]>([]);
 
