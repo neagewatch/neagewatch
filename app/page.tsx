@@ -3,7 +3,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import PriceChart from "@/components/PriceChart";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
 type PriceChange = {
@@ -19,75 +18,39 @@ export default function Home() {
   const [data, setData] = useState<PriceChange[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [dark, setDark] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-
-      const { data, error } = await supabase
-        .from("price_changes")
-        .select("*");
-
-      if (error) {
-        console.error(error);
-        setLoading(false);
-        return;
-      }
-
-      setData(data || []);
+      const { data, error } = await supabase.from("price_changes").select("*");
+      if (!error) setData(data || []);
       setLoading(false);
     };
-
     fetchData();
 
     const channel = supabase
       .channel("price_changes_realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "price_changes" },
-        fetchData
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "price_changes" }, fetchData)
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // =====================
-  // フィルター
-  // =====================
   const filtered = data.filter((item) =>
-    (item.company + item.product)
-      .toLowerCase()
-      .includes(search.toLowerCase())
+    (item.company + item.product).toLowerCase().includes(search.toLowerCase())
   );
 
-  // =====================
-  // 分析レイヤー
-  // =====================
   const enriched = useMemo(() => {
     return filtered.map((item) => {
       const diff = item.new_price - item.old_price;
-      const percent =
-        item.old_price !== 0
-          ? (diff / item.old_price) * 100
-          : 0;
-
+      const percent = item.old_price !== 0 ? (diff / item.old_price) * 100 : 0;
       return { ...item, diff, percent };
     });
   }, [filtered]);
 
-  // =====================
-  // KPI（SaaSの核）
-  // =====================
   const kpi = useMemo(() => {
     if (!enriched.length) return null;
-
     const diffs = enriched.map((d) => d.diff);
-
     return {
       avg: diffs.reduce((a, b) => a + b, 0) / diffs.length,
       maxUp: Math.max(...diffs),
@@ -96,12 +59,9 @@ export default function Home() {
     };
   }, [enriched]);
 
-  // =====================
-  // トレンド（重要度順）
-  // =====================
   const trending = [...enriched]
     .sort((a, b) => Math.abs(b.percent) - Math.abs(a.percent))
-    .slice(0, 6);
+    .slice(0, 5);
 
   const chartData = enriched.map((item) => ({
     company: item.company,
@@ -110,94 +70,81 @@ export default function Home() {
   }));
 
   return (
-    <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      style={{
-        ...styles.page,
-        background: dark ? "#0a0a0a" : "#f6f7f9",
-        color: dark ? "#fff" : "#111",
-      }}
-    >
-      {/* HEADER */}
-      <div style={styles.hero}>
-        <div style={styles.topbar}>
-          <div style={styles.logo}>▲ PriceWatch</div>
+    <div className="container">
+      <div style={{ marginBottom: 32 }}>
+        <h1 className="page-title">価格変動ダッシュボード</h1>
+        <p className="page-sub">日本の価格変動をリアルタイムで可視化</p>
+      </div>
 
-          <button onClick={() => setDark(!dark)} style={styles.toggle}>
-            {dark ? "Dark" : "Light"}
-          </button>
+      <div className="kpi-grid">
+        <div className="kpi-card">
+          <div className="kpi-label">データ数</div>
+          <div className="kpi-value">{data.length}</div>
         </div>
-
-        <h1 style={styles.h1}>Real-time Price Intelligence</h1>
-        <p style={styles.subText}>
-          日本の価格変動をリアルタイムで可視化
-        </p>
-
-        {/* KPI */}
-        <div style={styles.kpiGrid}>
-          <div style={styles.kpiCard}>
-            <div>Events</div>
-            <b>{data.length}</b>
-          </div>
-
-          <div style={styles.kpiCard}>
-            <div>Companies</div>
-            <b>{new Set(data.map((d) => d.company)).size}</b>
-          </div>
-
-          <div style={styles.kpiCard}>
-            <div>Avg Change</div>
-            <b>{kpi?.avg.toFixed(2) ?? 0}</b>
-          </div>
-
-          <div style={styles.kpiCard}>
-            <div>Trend</div>
-            <b>Live</b>
-          </div>
+        <div className="kpi-card">
+          <div className="kpi-label">企業数</div>
+          <div className="kpi-value">{new Set(data.map((d) => d.company)).size}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-label">平均変動</div>
+          <div className="kpi-value">{kpi ? `¥${kpi.avg.toFixed(0)}` : "—"}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-label">ステータス</div>
+          <div className="kpi-value" style={{ color: "var(--accent)" }}>Live</div>
         </div>
       </div>
 
-      {/* BODY */}
-      <div style={styles.container}>
-        {/* LEFT */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20 }}>
         <div>
           <input
-            style={styles.search}
-            placeholder="Search..."
+            placeholder="企業名・商品名で検索..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px 14px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius)",
+              fontSize: 14,
+              marginBottom: 16,
+              outline: "none",
+              fontFamily: "var(--font)",
+            }}
           />
 
-          <div style={styles.panel}>
-            <div style={styles.panelTitle}>Price Trend</div>
+          <div className="card" style={{ marginBottom: 20, padding: 16 }}>
+            <div className="section-label">価格トレンド</div>
             <PriceChart data={chartData} />
           </div>
 
-          <div style={styles.list}>
+          <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "16px 16px 8px" }}>
+              <div className="section-label">価格変動一覧</div>
+            </div>
             {loading ? (
-              <p>Loading...</p>
+              <div style={{ padding: 20, color: "var(--text-muted)" }}>読み込み中...</div>
+            ) : enriched.length === 0 ? (
+              <div style={{ padding: 20, color: "var(--text-muted)" }}>データがありません</div>
             ) : (
               enriched.map((item) => (
                 <div
                   key={item.id}
-                  style={styles.row}
+                  className="list-row"
                   onClick={() => router.push(`/company/${item.slug}`)}
                 >
                   <div>
-                    <b>{item.company}</b>
-                    <div style={styles.small}>{item.product}</div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{item.company}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{item.product}</div>
                   </div>
-
-                  <div style={styles.price}>
-                    {item.old_price} → {item.new_price}
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        color: item.diff > 0 ? "red" : "green",
-                      }}
-                    >
-                      {item.percent.toFixed(1)}%
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 14 }}>
+                      <span style={{ color: "var(--text-muted)" }}>{item.old_price}円</span>
+                      <span style={{ margin: "0 6px", color: "var(--text-muted)" }}>→</span>
+                      <span style={{ fontWeight: 700 }}>{item.new_price}円</span>
+                    </div>
+                    <span className={item.diff > 0 ? "badge-up" : "badge-down"}>
+                      {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
                     </span>
                   </div>
                 </div>
@@ -206,120 +153,31 @@ export default function Home() {
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div style={styles.side}>
-          <div style={styles.sideCard}>
-            <div style={styles.sideTitle}>Trending</div>
-
+        <div>
+          <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "16px 16px 8px" }}>
+              <div className="section-label">トレンド</div>
+            </div>
             {trending.map((item) => (
-              <div key={item.id} style={styles.trendItem}>
-                <b>{item.company}</b>
-                <div style={styles.small}>
-                  {item.old_price} → {item.new_price}
+              <div
+                key={item.id}
+                className="list-row"
+                onClick={() => router.push(`/company/${item.slug}`)}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{item.company}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    {item.old_price} → {item.new_price}
+                  </div>
                 </div>
+                <span className={item.diff > 0 ? "badge-up" : "badge-down"}>
+                  {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
+                </span>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </motion.main>
+    </div>
   );
 }
-
-/* ===================== */
-const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: "100vh", fontFamily: "system-ui" },
-
-  hero: {
-    maxWidth: 1100,
-    margin: "0 auto",
-    padding: 40,
-  },
-
-  topbar: {
-    display: "flex",
-    justifyContent: "space-between",
-  },
-
-  logo: { fontWeight: 800 },
-
-  toggle: {
-    padding: "6px 10px",
-    border: "1px solid #ddd",
-    borderRadius: 8,
-  },
-
-  h1: { fontSize: 40, fontWeight: 800, marginTop: 20 },
-
-  subText: { color: "#666" },
-
-  kpiGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4,1fr)",
-    gap: 12,
-    marginTop: 20,
-  },
-
-  kpiCard: {
-    background: "#fff",
-    padding: 12,
-    borderRadius: 12,
-    border: "1px solid #eee",
-  },
-
-  container: {
-    maxWidth: 1100,
-    margin: "0 auto",
-    display: "grid",
-    gridTemplateColumns: "2fr 1fr",
-    gap: 20,
-    padding: 40,
-  },
-
-  search: {
-    width: "100%",
-    padding: 12,
-    marginBottom: 12,
-    border: "1px solid #ddd",
-    borderRadius: 10,
-  },
-
-  panel: {
-    background: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-
-  panelTitle: { fontSize: 12, color: "#666" },
-
-  list: {
-    background: "#fff",
-    borderRadius: 12,
-  },
-
-  row: {
-    padding: 14,
-    borderBottom: "1px solid #eee",
-    cursor: "pointer",
-  },
-
-  price: { marginTop: 6 },
-
-  small: { fontSize: 12, color: "#888" },
-
-  side: {},
-
-  sideCard: {
-    background: "#fff",
-    padding: 16,
-    borderRadius: 12,
-  },
-
-  sideTitle: { fontSize: 12, color: "#666" },
-
-  trendItem: {
-    padding: "10px 0",
-    borderBottom: "1px solid #eee",
-  },
-};
