@@ -1,154 +1,34 @@
 export const COMPANIES = {
-  mcdonalds: {
-    name: "マクドナルド",
-    slug: "mcdonalds",
-    aliases: ["マクドナルド", "マック", "マクド", "McDonald's"]
-  },
-  seven: {
-    name: "セブンイレブン",
-    slug: "seven",
-    aliases: ["セブン", "セブンイレブン", "7-11", "セブン-イレブン"]
-  },
-  familymart: {
-    name: "ファミリーマート",
-    slug: "familymart",
-    aliases: ["ファミマ", "ファミリーマート"]
-  },
-  lawson: {
-    name: "ローソン",
-    slug: "lawson",
-    aliases: ["ローソン"]
-  },
-  nissin: {
-    name: "日清",
-    slug: "nissin",
-    aliases: ["日清", "カップヌードル"]
-  },
-  meiji: {
-    name: "明治",
-    slug: "meiji",
-    aliases: ["明治"]
-  },
-  yoshinoya: {
-    name: "吉野家",
-    slug: "yoshinoya",
-    aliases: ["吉野家"]
-  },
-  sukiya: {
-    name: "すき家",
-    slug: "sukiya",
-    aliases: ["すき家"]
-  },
-  matsuya: {
-    name: "松屋",
-    slug: "matsuya",
-    aliases: ["松屋"]
-  },
-  mos: {
-    name: "モスバーガー",
-    slug: "mos",
-    aliases: ["モスバーガー", "モス"]
-  },
-  kfc: {
-    name: "ケンタッキー",
-    slug: "kfc",
-    aliases: ["ケンタッキー", "KFC", "ケンタ"]
-  },
-  saizeriya: {
-    name: "サイゼリヤ",
-    slug: "saizeriya",
-    aliases: ["サイゼリヤ", "サイゼ"]
-  },
-  aeon: {
-    name: "イオン",
-    slug: "aeon",
-    aliases: ["イオン", "AEON"]
-  },
-  seiyu: {
-    name: "西友",
-    slug: "seiyu",
-    aliases: ["西友"]
-  },
-  donki: {
-    name: "ドン・キホーテ",
-    slug: "donki",
-    aliases: ["ドン・キホーテ", "ドンキ", "ドンキホーテ"]
-  },
-  costco: {
-    name: "コストコ",
-    slug: "costco",
-    aliases: ["コストコ"]
-  },
-  calbee: {
-    name: "カルビー",
-    slug: "calbee",
-    aliases: ["カルビー"]
-  },
-  glico: {
-    name: "江崎グリコ",
-    slug: "glico",
-    aliases: ["グリコ", "江崎グリコ"]
-  },
-  morinaga: {
-    name: "森永",
-    slug: "morinaga",
-    aliases: ["森永"]
-  },
-  house: {
-    name: "ハウス食品",
-    slug: "house",
-    aliases: ["ハウス食品", "ハウス"]
-  },
-  kikkoman: {
-    name: "キッコーマン",
-    slug: "kikkoman",
-    aliases: ["キッコーマン"]
-  },
-  ajinomoto: {
-    name: "味の素",
-    slug: "ajinomoto",
-    aliases: ["味の素"]
-  },
-  suntory: {
-    name: "サントリー",
-    slug: "suntory",
-    aliases: ["サントリー"]
-  },
-  kirin: {
-    name: "キリン",
-    slug: "kirin",
-    aliases: ["キリン", "キリンビール"]
-  },
-  asahi: {
-    name: "アサヒ",
-    slug: "asahi",
-    aliases: ["アサヒ", "アサヒビール"]
-  },
-  cocacola: {
-    name: "コカコーラ",
-    slug: "cocacola",
-    aliases: ["コカコーラ", "コカ・コーラ"]
-  },
-  uniqlo: {
-    name: "ユニクロ",
-    slug: "uniqlo",
-    aliases: ["ユニクロ", "UNIQLO"]
-  },
-  muji: {
-    name: "無印良品",
-    slug: "muji",
-    aliases: ["無印良品", "無印", "MUJI"]
-  },
-  starbucks: {
-    name: "スターバックス",
-    slug: "starbucks",
-    aliases: ["スターバックス", "スタバ"]
-  },
-  lotte: {
-  name: "ロッテ",
-  slug: "lotte",
-  aliases: ["ロッテ"]
-},
+  mcdonalds: { name: "マクドナルド", slug: "mcdonalds", category: "外食", aliases: ["マクドナルド", "マック", "マクド", "McDonald's"] },
+  seven: { name: "セブンイレブン", slug: "seven", category: "コンビニ", aliases: ["セブン", "セブンイレブン", "7-11", "セブン-イレブン"] },
+  familymart: { name: "ファミリーマート", slug: "familymart", category: "コンビニ", aliases: ["ファミマ", "ファミリーマート"] },
+  lawson: { name: "ローソン", slug: "lawson", category: "コンビニ", aliases: ["ローソン"] },
+  nissin: { name: "日清", slug: "nissin", category: "食品メーカー", aliases: ["日清", "カップヌードル"] },
+  meiji: { name: "明治", slug: "meiji", category: "食品メーカー", aliases: ["明治"] },
+  yoshinoya: { name: "吉野家", slug: "yoshinoya", category: "外食", aliases: ["吉野家"] },
+  sukiya: { name: "すき家", slug: "sukiya", category: "外食", aliases: ["すき家"] },
+  matsuya: { name: "松屋", slug: "matsuya", category: "外食", aliases: ["松屋"] },
+  mos: { name: "モスバーガー", slug: "mos", category: "外食", aliases: ["モスバーガー", "モス"] },
+  kfc: { name: "ケンタッキー", slug: "kfc", category: "外食", aliases: ["ケンタッキー", "KFC", "ケンタ"] },
+  saizeriya: { name: "サイゼリヤ", slug: "saizeriya", category: "外食", aliases: ["サイゼリヤ", "サイゼ"] },
+  aeon: { name: "イオン", slug: "aeon", category: "小売", aliases: ["イオン", "AEON"] },
+  seiyu: { name: "西友", slug: "seiyu", category: "小売", aliases: ["西友"] },
+  donki: { name: "ドン・キホーテ", slug: "donki", category: "小売", aliases: ["ドン・キホーテ", "ドンキ", "ドンキホーテ"] },
+  costco: { name: "コストコ", slug: "costco", category: "小売", aliases: ["コストコ"] },
+  calbee: { name: "カルビー", slug: "calbee", category: "食品メーカー", aliases: ["カルビー"] },
+  glico: { name: "江崎グリコ", slug: "glico", category: "食品メーカー", aliases: ["グリコ", "江崎グリコ"] },
+  morinaga: { name: "森永", slug: "morinaga", category: "食品メーカー", aliases: ["森永"] },
+  house: { name: "ハウス食品", slug: "house", category: "食品メーカー", aliases: ["ハウス食品", "ハウス"] },
+  kikkoman: { name: "キッコーマン", slug: "kikkoman", category: "食品メーカー", aliases: ["キッコーマン"] },
+  ajinomoto: { name: "味の素", slug: "ajinomoto", category: "食品メーカー", aliases: ["味の素"] },
+  suntory: { name: "サントリー", slug: "suntory", category: "飲料", aliases: ["サントリー"] },
+  kirin: { name: "キリン", slug: "kirin", category: "飲料", aliases: ["キリン", "キリンビール"] },
+  asahi: { name: "アサヒ", slug: "asahi", category: "飲料", aliases: ["アサヒ", "アサヒビール"] },
+  cocacola: { name: "コカコーラ", slug: "cocacola", category: "飲料", aliases: ["コカコーラ", "コカ・コーラ"] },
+  uniqlo: { name: "ユニクロ", slug: "uniqlo", category: "小売", aliases: ["ユニクロ", "UNIQLO"] },
+  muji: { name: "無印良品", slug: "muji", category: "小売", aliases: ["無印良品", "無印", "MUJI"] },
+  starbucks: { name: "スターバックス", slug: "starbucks", category: "外食", aliases: ["スターバックス", "スタバ"] },
+  lotte: { name: "ロッテ", slug: "lotte", category: "食品メーカー", aliases: ["ロッテ"] },
 } as const
 
 export type CompanyId = keyof typeof COMPANIES
