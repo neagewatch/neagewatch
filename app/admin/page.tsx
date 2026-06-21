@@ -22,10 +22,7 @@ export default function AdminPage() {
   const [msg, setMsg] = useState("");
 
   const fetchData = async () => {
-    const { data } = await supabase
-      .from("price_changes")
-      .select("*")
-      .order("id", { ascending: false });
+    const { data } = await supabase.from("price_changes").select("*").order("id", { ascending: false });
     setData(data || []);
   };
 
@@ -38,14 +35,10 @@ export default function AdminPage() {
     if (!product || !oldPrice || !newPrice) { setMsg("全項目を入力してください"); return; }
 
     const { error } = await supabase.from("price_changes").insert({
-      company: info.name,
-      slug: info.slug,
-      product,
-      old_price: Number(oldPrice),
-      new_price: Number(newPrice),
+      company: info.name, slug: info.slug, product,
+      old_price: Number(oldPrice), new_price: Number(newPrice),
       change_type: Number(newPrice) > Number(oldPrice) ? "increase" : "decrease",
-      source_url: "manual",
-      article_text: "手動入力",
+      source_url: "manual", article_text: "手動入力",
     });
 
     if (error) { setMsg("エラー: " + error.message); return; }
@@ -61,55 +54,65 @@ export default function AdminPage() {
     fetchData();
   };
 
-  return (
-    <main style={styles.page}>
-      <div style={styles.container}>
-        <h1 style={styles.title}>Admin</h1>
+  const inputStyle: React.CSSProperties = {
+    padding: "10px 14px", border: "1px solid var(--border)",
+    borderRadius: "var(--radius)", fontSize: 14, fontFamily: "var(--font)",
+    outline: "none", background: "var(--surface)",
+  };
 
-        <div style={styles.form}>
-          <select value={company} onChange={(e) => setCompany(e.target.value)} style={styles.input}>
+  return (
+    <div className="container">
+      <h1 className="page-title">管理画面</h1>
+      <p className="page-sub">データの追加・削除</p>
+
+      <div className="card" style={{ marginBottom: 28 }}>
+        <div className="section-label">データ追加</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+          <select value={company} onChange={(e) => setCompany(e.target.value)} style={{ ...inputStyle, minWidth: 160 }}>
             <option value="">企業を選択</option>
             {Object.entries(COMPANIES).map(([key, c]) => (
               <option key={key} value={key}>{c.name}</option>
             ))}
           </select>
-          <input placeholder="商品名" value={product} onChange={(e) => setProduct(e.target.value)} style={styles.input} />
-          <input placeholder="旧価格" type="number" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} style={styles.input} />
-          <input placeholder="新価格" type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} style={styles.input} />
-          <button onClick={handleAdd} style={styles.btn}>追加</button>
+          <input placeholder="商品名" value={product} onChange={(e) => setProduct(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
+          <input placeholder="旧価格" type="number" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} style={{ ...inputStyle, width: 100 }} />
+          <input placeholder="新価格" type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} style={{ ...inputStyle, width: 100 }} />
+          <button onClick={handleAdd} style={{
+            padding: "10px 24px", background: "var(--accent)", color: "#fff",
+            border: "none", borderRadius: "var(--radius)", cursor: "pointer",
+            fontWeight: 700, fontSize: 14, fontFamily: "var(--font)",
+          }}>追加</button>
         </div>
-
-        {msg && <div style={styles.msg}>{msg}</div>}
-
-        <div style={styles.list}>
-          {data.map((item) => (
-            <div key={item.id} style={styles.row}>
-              <div>
-                <b>{item.company}</b> - {item.product}
-                <div style={styles.small}>{item.old_price} → {item.new_price}</div>
-              </div>
-              <button onClick={() => handleDelete(item.id)} style={styles.delBtn}>削除</button>
-            </div>
-          ))}
-        </div>
+        {msg && (
+          <div style={{
+            marginTop: 12, padding: "8px 14px",
+            background: msg.includes("エラー") ? "var(--up-bg)" : "var(--down-bg)",
+            color: msg.includes("エラー") ? "var(--up)" : "var(--down)",
+            borderRadius: "var(--radius)", fontSize: 13, fontWeight: 600,
+          }}>{msg}</div>
+        )}
       </div>
 
-      <a href="/" style={styles.back}>← ダッシュボードに戻る</a>
-    </main>
+      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px 8px" }}>
+          <div className="section-label">登録データ ({data.length}件)</div>
+        </div>
+        {data.map((item) => (
+          <div key={item.id} className="list-row">
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{item.company}</div>
+              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                {item.product} ・ {item.old_price}円 → {item.new_price}円
+              </div>
+            </div>
+            <button onClick={() => handleDelete(item.id)} style={{
+              padding: "6px 14px", background: "var(--up-bg)", color: "var(--up)",
+              border: "none", borderRadius: "var(--radius)", cursor: "pointer",
+              fontSize: 12, fontWeight: 700, fontFamily: "var(--font)",
+            }}>削除</button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: "100vh", background: "#f6f7f9", fontFamily: "system-ui", padding: 40 },
-  container: { maxWidth: 900, margin: "0 auto" },
-  title: { fontSize: 28, fontWeight: 800, marginBottom: 20 },
-  form: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 },
-  input: { padding: 10, border: "1px solid #ddd", borderRadius: 8, fontSize: 14 },
-  btn: { padding: "10px 20px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 },
-  msg: { padding: 10, background: "#dcfce7", borderRadius: 8, marginBottom: 16, fontSize: 14 },
-  list: { background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb" },
-  row: { padding: 14, borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  small: { fontSize: 12, color: "#888" },
-  delBtn: { padding: "6px 12px", background: "#fee2e2", color: "#b91c1c", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 700 },
-  back: { display: "block", maxWidth: 900, margin: "30px auto 0", color: "#2563eb", textDecoration: "none", fontWeight: 600 },
-};

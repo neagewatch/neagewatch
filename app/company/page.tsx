@@ -7,57 +7,47 @@ const supabase = createClient(
 );
 
 export default async function CompanyListPage() {
-  const { data } = await supabase
-    .from("price_changes")
-    .select("slug, company");
+  const { data } = await supabase.from("price_changes").select("slug, company");
 
   const countMap: Record<string, number> = {};
-  data?.forEach((item) => {
-    countMap[item.slug] = (countMap[item.slug] || 0) + 1;
-  });
+  data?.forEach((item) => { countMap[item.slug] = (countMap[item.slug] || 0) + 1; });
 
-  const companyList = Object.entries(COMPANIES).map(([key, company]) => ({
-    slug: company.slug,
-    name: company.name,
-    count: countMap[company.slug] || 0,
+  const categories: Record<string, typeof list> = {};
+  const list = Object.entries(COMPANIES).map(([key, c]) => ({
+    slug: c.slug, name: c.name, category: c.category, count: countMap[c.slug] || 0,
   }));
 
+  list.forEach((c) => {
+    if (!categories[c.category]) categories[c.category] = [];
+    categories[c.category].push(c);
+  });
+
   return (
-    <main style={styles.page}>
-      <div style={styles.container}>
-        <h1 style={styles.title}>企業一覧</h1>
-        <p style={styles.sub}>登録企業: {companyList.length}社</p>
+    <div className="container">
+      <h1 className="page-title">企業一覧</h1>
+      <p className="page-sub">登録企業 {list.length}社 ・ データのある企業 {Object.keys(countMap).length}社</p>
 
-        <div style={styles.grid}>
-          {companyList.map((c) => (
-            <a key={c.slug} href={`/company/${c.slug}`} style={styles.card}>
-              <div style={styles.name}>{c.name}</div>
-              <div style={styles.count}>{c.count}件のデータ</div>
-            </a>
-          ))}
+      {Object.entries(categories).map(([cat, companies]) => (
+        <div key={cat} style={{ marginBottom: 32 }}>
+          <div className="section-label">{cat}</div>
+          <div className="grid-3">
+            {companies.map((c) => (
+              <a key={c.slug} href={`/company/${c.slug}`} className="card" style={{
+                textDecoration: "none", color: "inherit", display: "block",
+              }}>
+                <div style={{ fontSize: 16, fontWeight: 700 }}>{c.name}</div>
+                <div style={{
+                  fontSize: 12, marginTop: 8,
+                  color: c.count > 0 ? "var(--accent)" : "var(--text-muted)",
+                  fontWeight: 600,
+                }}>
+                  {c.count > 0 ? `${c.count}件のデータ` : "データなし"}
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
-
-      <a href="/" style={styles.back}>← ダッシュボードに戻る</a>
-    </main>
+      ))}
+    </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: "100vh", background: "#f6f7f9", fontFamily: "system-ui", padding: 40 },
-  container: { maxWidth: 900, margin: "0 auto" },
-  title: { fontSize: 28, fontWeight: 800 },
-  sub: { color: "#666", marginTop: 4, marginBottom: 24 },
-  grid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 },
-  card: {
-    background: "#fff",
-    padding: 20,
-    borderRadius: 12,
-    border: "1px solid #e5e7eb",
-    textDecoration: "none",
-    color: "#111",
-  },
-  name: { fontSize: 18, fontWeight: 700 },
-  count: { fontSize: 13, color: "#888", marginTop: 6 },
-  back: { display: "block", maxWidth: 900, margin: "30px auto 0", color: "#2563eb", textDecoration: "none", fontWeight: 600 },
-};

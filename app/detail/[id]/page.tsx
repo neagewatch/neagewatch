@@ -5,79 +5,74 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-
-  const { data } = await supabase
-    .from("price_changes")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { data } = await supabase.from("price_changes").select("*").eq("id", id).single();
 
   if (!data) {
     return (
-      <main style={{ padding: 40, fontFamily: "sans-serif" }}>
-        <h2>Not found</h2>
-        <a href="/">← Back</a>
-      </main>
+      <div className="container">
+        <div className="card" style={{ textAlign: "center", padding: 60 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 12 }}>データが見つかりません</h2>
+          <a href="/" style={{ color: "var(--accent)", fontWeight: 600, fontSize: 13 }}>← ダッシュボードに戻る</a>
+        </div>
+      </div>
     );
   }
 
   const diff = data.new_price - data.old_price;
   const isUp = diff > 0;
+  const percent = data.old_price !== 0 ? (diff / data.old_price) * 100 : 0;
 
   return (
-    <main style={styles.page}>
-      <section style={styles.hero}>
-        <div style={styles.company}>{data.company}</div>
-        <div style={styles.product}>{data.product}</div>
-        <div style={styles.priceBlock}>
-          <span style={styles.old}>{data.old_price}円</span>
-          <span style={styles.arrow}>→</span>
-          <span style={styles.new}>{data.new_price}円</span>
-        </div>
-        <div style={isUp ? styles.badgeUp : styles.badgeDown}>
-          {isUp ? "+" : ""}{diff}円
-        </div>
-      </section>
-
-      <section style={styles.card}>
-        <h3 style={styles.title}>Price Insight</h3>
-        <p style={styles.text}>
-          この商品は<b>{Math.abs(diff)}</b>円の
-          <b>{isUp ? "値上げ" : "値下げ"}</b>が発生しました。
-        </p>
-        <div style={styles.meta}>
-          <div>ID: {data.id}</div>
-          <div>Slug: {data.slug}</div>
-        </div>
-      </section>
-
-      <a href={`/company/${data.slug}`} style={styles.back}>
-        ← {data.company}に戻る
+    <div className="container" style={{ maxWidth: 700 }}>
+      <a href={`/company/${data.slug}`} style={{ fontSize: 12, color: "var(--accent)", fontWeight: 600 }}>
+        ← {data.company}
       </a>
-    </main>
+
+      <div className="card" style={{ marginTop: 12, marginBottom: 20 }}>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600, marginBottom: 4 }}>{data.company}</div>
+        <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>{data.product}</h1>
+
+        <div style={{ marginTop: 24, display: "flex", alignItems: "baseline", gap: 12 }}>
+          <span style={{ fontSize: 18, color: "var(--text-muted)" }}>{data.old_price}円</span>
+          <span style={{ color: "var(--text-muted)" }}>→</span>
+          <span style={{ fontSize: 28, fontWeight: 900 }}>{data.new_price}円</span>
+        </div>
+
+        <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+          <span className={isUp ? "badge-up" : "badge-down"} style={{ fontSize: 14, padding: "4px 12px" }}>
+            {isUp ? "+" : ""}{diff}円
+          </span>
+          <span className={isUp ? "badge-up" : "badge-down"} style={{ fontSize: 14, padding: "4px 12px" }}>
+            {isUp ? "+" : ""}{percent.toFixed(1)}%
+          </span>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="section-label">詳細情報</div>
+        <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+            <span style={{ color: "var(--text-muted)" }}>変動タイプ</span>
+            <span style={{ fontWeight: 600 }}>{isUp ? "値上げ" : "値下げ"}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+            <span style={{ color: "var(--text-muted)" }}>企業</span>
+            <span style={{ fontWeight: 600 }}>{data.company}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+            <span style={{ color: "var(--text-muted)" }}>Slug</span>
+            <span style={{ fontWeight: 600 }}>{data.slug}</span>
+          </div>
+          {data.source_url && data.source_url !== "manual" && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0" }}>
+              <span style={{ color: "var(--text-muted)" }}>ソース</span>
+              <a href={data.source_url} target="_blank" style={{ color: "var(--accent)", fontWeight: 600 }}>記事を見る →</a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: "100vh", background: "#f6f7f9", fontFamily: "ui-sans-serif, system-ui", padding: 40, color: "#111" },
-  hero: { maxWidth: 800, margin: "0 auto", background: "#fff", padding: 24, borderRadius: 16, border: "1px solid #e5e7eb" },
-  company: { fontSize: 22, fontWeight: 800 },
-  product: { marginTop: 6, color: "#6b7280" },
-  priceBlock: { marginTop: 20, fontSize: 26, fontWeight: 700 },
-  old: { color: "#6b7280" },
-  new: { fontWeight: 800 },
-  arrow: { margin: "0 10px", color: "#9ca3af" },
-  badgeUp: { marginTop: 16, display: "inline-block", padding: "6px 10px", background: "#fee2e2", color: "#b91c1c", borderRadius: 999, fontSize: 12, fontWeight: 700 },
-  badgeDown: { marginTop: 16, display: "inline-block", padding: "6px 10px", background: "#dcfce7", color: "#166534", borderRadius: 999, fontSize: 12, fontWeight: 700 },
-  card: { maxWidth: 800, margin: "20px auto", background: "#fff", padding: 24, borderRadius: 16, border: "1px solid #e5e7eb" },
-  title: { fontSize: 14, color: "#6b7280", marginBottom: 10 },
-  text: { fontSize: 16, lineHeight: 1.7 },
-  meta: { marginTop: 20, fontSize: 12, color: "#9ca3af", display: "grid", gap: 6 },
-  back: { display: "block", maxWidth: 800, margin: "30px auto 0", color: "#2563eb", textDecoration: "none", fontWeight: 600 },
-};
