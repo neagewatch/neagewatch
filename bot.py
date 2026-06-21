@@ -24,14 +24,48 @@ supabase = create_client(
 COMPANY_MASTER = {
     "マクドナルド":    {"name": "マクドナルド",    "slug": "mcdonalds"},
     "マック":          {"name": "マクドナルド",    "slug": "mcdonalds"},
+    "マクド":          {"name": "マクドナルド",    "slug": "mcdonalds"},
     "セブンイレブン":  {"name": "セブンイレブン",  "slug": "seven"},
     "セブン":          {"name": "セブンイレブン",  "slug": "seven"},
     "ファミリーマート":{"name": "ファミリーマート","slug": "familymart"},
     "ファミマ":        {"name": "ファミリーマート","slug": "familymart"},
     "ローソン":        {"name": "ローソン",        "slug": "lawson"},
     "日清":            {"name": "日清",            "slug": "nissin"},
+    "カップヌードル":  {"name": "日清",            "slug": "nissin"},
     "明治":            {"name": "明治",            "slug": "meiji"},
     "吉野家":          {"name": "吉野家",          "slug": "yoshinoya"},
+    "すき家":          {"name": "すき家",          "slug": "sukiya"},
+    "松屋":            {"name": "松屋",            "slug": "matsuya"},
+    "モスバーガー":    {"name": "モスバーガー",    "slug": "mos"},
+    "モス":            {"name": "モスバーガー",    "slug": "mos"},
+    "ケンタッキー":    {"name": "ケンタッキー",    "slug": "kfc"},
+    "KFC":             {"name": "ケンタッキー",    "slug": "kfc"},
+    "ケンタ":          {"name": "ケンタッキー",    "slug": "kfc"},
+    "サイゼリヤ":      {"name": "サイゼリヤ",      "slug": "saizeriya"},
+    "サイゼ":          {"name": "サイゼリヤ",      "slug": "saizeriya"},
+    "イオン":          {"name": "イオン",          "slug": "aeon"},
+    "西友":            {"name": "西友",            "slug": "seiyu"},
+    "ドン・キホーテ":  {"name": "ドン・キホーテ",  "slug": "donki"},
+    "ドンキ":          {"name": "ドン・キホーテ",  "slug": "donki"},
+    "コストコ":        {"name": "コストコ",        "slug": "costco"},
+    "カルビー":        {"name": "カルビー",        "slug": "calbee"},
+    "グリコ":          {"name": "江崎グリコ",      "slug": "glico"},
+    "江崎グリコ":      {"name": "江崎グリコ",      "slug": "glico"},
+    "森永":            {"name": "森永",            "slug": "morinaga"},
+    "ハウス食品":      {"name": "ハウス食品",      "slug": "house"},
+    "ハウス":          {"name": "ハウス食品",      "slug": "house"},
+    "キッコーマン":    {"name": "キッコーマン",    "slug": "kikkoman"},
+    "味の素":          {"name": "味の素",          "slug": "ajinomoto"},
+    "サントリー":      {"name": "サントリー",      "slug": "suntory"},
+    "キリン":          {"name": "キリン",          "slug": "kirin"},
+    "キリンビール":    {"name": "キリン",          "slug": "kirin"},
+    "アサヒ":          {"name": "アサヒ",          "slug": "asahi"},
+    "アサヒビール":    {"name": "アサヒ",          "slug": "asahi"},
+    "コカコーラ":      {"name": "コカコーラ",      "slug": "cocacola"},
+    "コカ・コーラ":    {"name": "コカコーラ",      "slug": "cocacola"},
+    "ユニクロ":        {"name": "ユニクロ",        "slug": "uniqlo"},
+    "無印良品":        {"name": "無印良品",        "slug": "muji"},
+    "無印":            {"name": "無印良品",        "slug": "muji"},
     "スターバックス":  {"name": "スターバックス",  "slug": "starbucks"},
     "スタバ":          {"name": "スターバックス",  "slug": "starbucks"},
 }
@@ -127,6 +161,13 @@ for item in items:
 
     old_price = int(prices[0])
     new_price = int(prices[1])
+
+# 重複チェック
+    existing = supabase.table("price_changes").select("id").eq("source_url", link).execute()
+
+    if existing.data:
+        print("重複 → スキップ")
+        continue
 
     # 保存
     data = {
