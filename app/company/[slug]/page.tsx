@@ -1,5 +1,6 @@
 "use client";
 
+
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import PriceChart from "@/components/PriceChart";
@@ -20,7 +21,11 @@ export default function CompanyPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = React.use(params);
+<<<<<<< HEAD
   const router = useRouter();
+=======
+  const router = useRouter();  // ← 追加
+>>>>>>> 663755b (企業一覧ページ改善)
   const [data, setData] = useState<PriceChange[]>([]);
 
   useEffect(() => {
@@ -93,6 +98,7 @@ export default function CompanyPage({
           <div style={styles.sectionTitle}>History</div>
           <div style={styles.list}>
             {enriched.map((item) => (
+<<<<<<< HEAD
               <div
                 key={item.id}
                 style={{ ...styles.row, cursor: "pointer" }}
@@ -110,6 +116,33 @@ export default function CompanyPage({
                 </div>
               </div>
             ))}
+=======
+  <div
+    key={item.id}
+    style={{ ...styles.row, cursor: "pointer" }}
+    onClick={() => router.push(`/detail/${item.id}`)}
+  >
+    <div>
+      <div style={styles.product}>{item.product}</div>
+      <div style={styles.company}>{item.company}</div>
+    </div>
+
+    <div style={styles.priceBox}>
+      {item.old_price} → <b>{item.new_price}</b>
+      <span
+        style={{
+          marginLeft: 8,
+          fontSize: 12,
+          color: item.diff > 0 ? "#e11d48" : "#16a34a",
+        }}
+      >
+        {item.diff > 0 ? "+" : ""}
+        {(item.percent ?? 0).toFixed(1)}%
+      </span>
+    </div>
+  </div>
+))}
+>>>>>>> 663755b (企業一覧ページ改善)
           </div>
         </div>
       </div>
