@@ -261,7 +261,7 @@ export default function AnalysisPage() {
                   cx="50%"
                   cy="50%"
                   outerRadius={90}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                   fontSize={11}
                 >
                   {tagDistribution.map((entry, i) => (
@@ -298,7 +298,7 @@ export default function AnalysisPage() {
             <BarChart data={companyAvg} layout="vertical">
               <XAxis type="number" fontSize={11} unit="%" />
               <YAxis dataKey="name" type="category" fontSize={11} width={100} />
-              <Tooltip formatter={(value: number) => `${value}%`} />
+              <Tooltip formatter={(value) => `${value}%`} />
               <Bar dataKey="avg" fill="#dc2626" radius={[0, 4, 4, 0]} name="平均値上げ率" />
             </BarChart>
           </ResponsiveContainer>

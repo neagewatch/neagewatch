@@ -20,11 +20,34 @@ type PriceChange = {
   change_date?: string;
 };
 
+type BotRun = {
+  id: string;
+  ran_at: string;
+  status: string;
+  items_found: number;
+  items_inserted: number;
+  message?: string;
+};
+
 function formatDate(dateStr?: string): string {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}`;
+}
+
+function timeAgo(dateStr?: string): string {
+  if (!dateStr) return "不明";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "不明";
+  const diff = Date.now() - d.getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "たった今";
+  if (min < 60) return `${min}分前`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}時間前`;
+  const day = Math.floor(hr / 24);
+  return `${day}日前`;
 }
 
 function displayDate(item: PriceChange): string {
@@ -35,9 +58,11 @@ function displayDate(item: PriceChange): string {
 
 export default function Home() {
   const [data, setData] = useState<PriceChange[]>([]);
+  const [botRuns, setBotRuns] = useState<BotRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"new" | "percent" | "diff">("new");
   const router = useRouter();
 
   useEffect(() => {
@@ -45,6 +70,9 @@ export default function Home() {
       setLoading(true);
       const { data } = await supabase.from("price_changes").select("*").order("id", { ascending: false });
       setData(data || []);
+      // Bot稼働ログ（テーブルが無い場合は無視）
+      const { data: runs } = await supabase.from("bot_runs").select("*").order("ran_at", { ascending: false }).limit(10);
+      if (runs) setBotRuns(runs);
       setLoading(false);
     };
     fetchData();
@@ -64,20 +92,24 @@ export default function Home() {
     });
   }, [data]);
 
-  const filtered = enriched.filter((item) => {
-    const matchSearch = (item.company + item.product).toLowerCase().includes(search.toLowerCase());
-    const matchTag = selectedTag ? item.tag === selectedTag : true;
-    return matchSearch && matchTag;
-  });
+  const filtered = useMemo(() => {
+    const result = enriched.filter((item) => {
+      const matchSearch = (item.company + item.product).toLowerCase().includes(search.toLowerCase());
+      const matchTag = selectedTag ? item.tag === selectedTag : true;
+      return matchSearch && matchTag;
+    });
+    if (sortBy === "percent") result.sort((a, b) => b.percent - a.percent);
+    else if (sortBy === "diff") result.sort((a, b) => b.diff - a.diff);
+    return result;
+  }, [enriched, search, selectedTag, sortBy]);
 
   const kpi = useMemo(() => {
-    if (!enriched.length) return { total: 0, companies: 0, avg: 0, maxUp: 0 };
-    const diffs = enriched.map((d) => d.diff);
+    if (!enriched.length) return { total: 0, companies: 0, ups: 0, downs: 0 };
     return {
       total: enriched.length,
       companies: new Set(enriched.map((d) => d.company)).size,
-      avg: diffs.reduce((a, b) => a + b, 0) / diffs.length,
-      maxUp: Math.max(...diffs),
+      ups: enriched.filter((d) => d.diff > 0).length,
+      downs: enriched.filter((d) => d.diff < 0).length,
     };
   }, [enriched]);
 
@@ -87,268 +119,188 @@ export default function Home() {
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
   }, [enriched]);
 
-  const companyCount = useMemo(() => {
-    const map: Record<string, number> = {};
-    enriched.forEach((d) => { map[d.company] = (map[d.company] || 0) + 1; });
-    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  }, [enriched]);
-
-  const categoryData = useMemo(() => {
-    const map: Record<string, { count: number; totalDiff: number }> = {};
-    enriched.forEach((item) => {
-      const company = Object.values(COMPANIES).find((c) => c.slug === item.slug);
-      const cat = company?.category || "その他";
-      if (!map[cat]) map[cat] = { count: 0, totalDiff: 0 };
-      map[cat].count += 1;
-      map[cat].totalDiff += item.diff;
-    });
-    return Object.entries(map).map(([name, v]) => ({
-      name, count: v.count, avg: v.count > 0 ? Math.round(v.totalDiff / v.count) : 0,
-    }));
-  }, [enriched]);
-
-  const tickerText = useMemo(() => {
-    return enriched.slice(0, 15).map((d) =>
-      `${d.company} ${d.product} ${d.old_price}円→${d.new_price}円(${d.diff > 0 ? "+" : ""}${d.percent.toFixed(1)}%)`
-    ).join("　　　");
-  }, [enriched]);
+  const lastRun = botRuns[0];
+  const botHealthy = useMemo(() => {
+    if (!lastRun) return null;
+    const diff = Date.now() - new Date(lastRun.ran_at).getTime();
+    return diff < 2 * 3600 * 1000; // 2時間以内なら正常
+  }, [lastRun]);
 
   return (
     <div>
-      {/* ティッカー */}
-      {enriched.length > 0 && (
-        <div style={{
-          background: "var(--text-primary)", color: "#fff", overflow: "hidden",
-          whiteSpace: "nowrap", fontSize: 12, fontWeight: 600, padding: "6px 0",
-        }}>
-          <div style={{
-            display: "inline-block", animation: "ticker 30s linear infinite",
-            paddingLeft: "100%",
-          }}>
-            🔴 値上げ速報　　{tickerText}
-          </div>
-        </div>
-      )}
-
       <div className="container">
         {/* ヘッダー */}
-        <div style={{
-          background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
-          borderRadius: 20, padding: "32px 28px", marginBottom: 28,
-          color: "#fff", position: "relative", overflow: "hidden",
-        }}>
-          <div style={{
-            position: "absolute", top: -40, right: -40, width: 200, height: 200,
-            background: "radial-gradient(circle, rgba(79,70,229,0.3) 0%, transparent 70%)",
-            borderRadius: "50%",
-          }} />
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <span style={{
-              background: "#dc2626", padding: "4px 12px", borderRadius: 20,
-              fontSize: 11, fontWeight: 800, letterSpacing: 1,
-            }}>LIVE</span>
+        <div className="hero">
+          <div className="hero-glow" />
+          <div className="hero-badge">
+            <span className="hero-dot" />
+            LIVE TRACKING
           </div>
-          <h1 style={{ fontSize: "clamp(20px, 5vw, 26px)", fontWeight: 900, letterSpacing: -1, marginBottom: 4 }}>
-            値上げウォッチ
-          </h1>
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
-            価格変動をリアルタイムで追跡
-          </p>
+          <h1 className="hero-title">値上げウォッチ</h1>
+          <p className="hero-sub">日本中の価格変動を、リアルタイムで。</p>
         </div>
 
-        {/* KPI */}
+        {/* Bot稼働ステータス（実データ） */}
+        <div className="bot-status">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div className={`bot-indicator ${botHealthy === false ? "warn" : botHealthy === null ? "unknown" : ""}`} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>
+                収集Bot {botHealthy === null ? "状態不明" : botHealthy ? "正常稼働中" : "応答待ち"}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                {lastRun
+                  ? `最終実行: ${timeAgo(lastRun.ran_at)} ・ ${lastRun.items_inserted}件追加`
+                  : "1時間ごとにRSSを自動収集"}
+              </div>
+            </div>
+          </div>
+          {lastRun && (
+            <div style={{ display: "flex", gap: 4, alignItems: "flex-end", height: 28 }}>
+              {botRuns.slice(0, 8).reverse().map((run) => (
+                <div key={run.id} title={`${timeAgo(run.ran_at)}: ${run.items_inserted}件`}
+                  style={{
+                    width: 5, borderRadius: 2,
+                    height: Math.max(4, Math.min(28, run.items_inserted * 4 + 4)),
+                    background: run.status === "success" ? "var(--accent)" : "var(--up)",
+                    opacity: 0.4 + (run.items_inserted > 0 ? 0.6 : 0),
+                  }} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* KPI（最大値上げ・平均変動を削除し、値上げ/値下げ件数に） */}
         <div className="kpi-grid">
           <div className="kpi-card">
-            <div className="kpi-label">データ数</div>
-            <div className="kpi-value">{kpi.total}</div>
+            <div className="kpi-icon" style={{ background: "var(--accent-light)" }}>📊</div>
+            <div>
+              <div className="kpi-label">総データ数</div>
+              <div className="kpi-value">{kpi.total}</div>
+            </div>
           </div>
           <div className="kpi-card">
-            <div className="kpi-label">企業数</div>
-            <div className="kpi-value">{kpi.companies}</div>
+            <div className="kpi-icon" style={{ background: "#eef2ff" }}>🏢</div>
+            <div>
+              <div className="kpi-label">企業数</div>
+              <div className="kpi-value">{kpi.companies}</div>
+            </div>
           </div>
           <div className="kpi-card">
-            <div className="kpi-label">平均変動</div>
-            <div className="kpi-value">¥{kpi.avg.toFixed(0)}</div>
+            <div className="kpi-icon" style={{ background: "var(--up-bg)" }}>📈</div>
+            <div>
+              <div className="kpi-label">値上げ</div>
+              <div className="kpi-value" style={{ color: "var(--up)" }}>{kpi.ups}</div>
+            </div>
           </div>
           <div className="kpi-card">
-            <div className="kpi-label">最大値上げ</div>
-            <div className="kpi-value" style={{ color: "var(--up)" }}>¥{kpi.maxUp}</div>
+            <div className="kpi-icon" style={{ background: "var(--down-bg)" }}>📉</div>
+            <div>
+              <div className="kpi-label">値下げ</div>
+              <div className="kpi-value" style={{ color: "var(--down)" }}>{kpi.downs}</div>
+            </div>
           </div>
         </div>
 
-        {/* 速報カード（横スクロール） */}
-        <div style={{ marginBottom: 28 }}>
-          <div className="section-label">最新の値上げ速報</div>
-          <div style={{
-            display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8,
-            scrollbarWidth: "thin",
-          }}>
-            {enriched.slice(0, 10).map((item) => {
+        {/* 最新速報（横スクロール） */}
+        <div style={{ marginBottom: 32 }}>
+          <div className="section-head">
+            <div className="section-label">最新の価格変動</div>
+            <a href="/analysis" className="section-link">分析を見る →</a>
+          </div>
+          <div className="hscroll">
+            {enriched.slice(0, 12).map((item) => {
               const dateLabel = displayDate(item);
               return (
-                <div key={item.id} onClick={() => router.push(`/company/${item.slug}`)} style={{
-                  minWidth: 220, background: "var(--surface)", border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-lg)", padding: "14px 16px", cursor: "pointer",
-                  flexShrink: 0, transition: "box-shadow var(--transition)",
-                }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{item.company}</div>
-                    <span style={{
-                      fontSize: 10, padding: "2px 6px", borderRadius: 8,
-                      background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag],
-                      fontWeight: 700,
-                    }}>{item.tag}</span>
+                <div key={item.id} onClick={() => router.push(`/company/${item.slug}`)} className="snap-card">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800 }}>{item.company}</div>
+                    <span className="mini-tag" style={{ background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag] }}>
+                      {item.tag}
+                    </span>
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>{item.product}</div>
-                  {dateLabel && (
-                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>📅 {dateLabel}</div>
-                  )}
-                  <div style={{ marginTop: 10, fontSize: 14 }}>
-                    <span style={{ color: "var(--text-muted)" }}>{item.old_price}円</span>
-                    <span style={{ margin: "0 4px", color: "var(--text-muted)" }}>→</span>
-                    <span style={{ fontWeight: 800 }}>{item.new_price}円</span>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 6, minHeight: 32 }}>
+                    {item.product.slice(0, 28)}
                   </div>
-                  <span className={item.diff > 0 ? "badge-up" : "badge-down"} style={{ marginTop: 8, display: "inline-block" }}>
-                    {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
-                  </span>
+                  {dateLabel && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>📅 {dateLabel}</div>}
+                  <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ fontSize: 14 }}>
+                      <span style={{ color: "var(--text-muted)", textDecoration: "line-through", fontSize: 12 }}>{item.old_price}円</span>
+                      <span style={{ fontWeight: 800, marginLeft: 6 }}>{item.new_price}円</span>
+                    </div>
+                    <span className={item.diff > 0 ? "badge-up" : "badge-down"}>
+                      {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* 値上げ回数ランキング */}
-        <div className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 28 }}>
-          <div style={{ padding: "16px 20px 8px" }}>
-            <div className="section-label">値上げ回数ランキング</div>
-          </div>
-          {companyCount.map(([name, count], i) => (
-            <div key={name} style={{
-              padding: "10px 20px", borderBottom: "1px solid var(--border-light)",
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{
-                  width: 22, height: 22, borderRadius: "50%",
-                  background: i === 0 ? "var(--accent)" : "var(--bg)",
-                  color: i === 0 ? "#fff" : "var(--text-secondary)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 800,
-                }}>{i + 1}</span>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{name}</span>
-              </div>
-              <span style={{
-                fontSize: 12, fontWeight: 700, padding: "2px 10px",
-                background: "var(--accent-light)", color: "var(--accent)", borderRadius: 20,
-              }}>{count}回</span>
-            </div>
-          ))}
-        </div>
-
-        {/* 業界別 */}
-        <div className="card" style={{ marginBottom: 28 }}>
-          <div className="section-label">業界別サマリー</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginTop: 12 }}>
-            {categoryData.map((cat) => (
-              <div key={cat.name} style={{
-                background: "var(--bg)", borderRadius: "var(--radius)",
-                padding: 16, border: "1px solid var(--border-light)",
-              }}>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{cat.name}</div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>件数</div>
-                    <div style={{ fontSize: 20, fontWeight: 800 }}>{cat.count}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>平均</div>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: cat.avg > 0 ? "var(--up)" : "var(--down)" }}>
-                      {cat.avg > 0 ? "+" : ""}¥{cat.avg}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {/* フィルター + 検索 + ソート */}
+        <div className="filter-bar">
+          <input
+            placeholder="🔍 企業名・商品名で検索..."
+            value={search} onChange={(e) => setSearch(e.target.value)}
+            className="search-input"
+          />
+          <div className="sort-tabs">
+            <button onClick={() => setSortBy("new")} className={sortBy === "new" ? "sort-active" : ""}>新着順</button>
+            <button onClick={() => setSortBy("percent")} className={sortBy === "percent" ? "sort-active" : ""}>変動率順</button>
+            <button onClick={() => setSortBy("diff")} className={sortBy === "diff" ? "sort-active" : ""}>変動額順</button>
           </div>
         </div>
 
-        {/* Bot状況 */}
-        <div className="card" style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <div className="section-label">Bot稼働状況</div>
-            <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>1時間ごとにRSSを自動取得</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#16a34a", animation: "pulse 2s infinite" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--down)" }}>稼働中</span>
-          </div>
-        </div>
-
-        {/* タグフィルター */}
-        <div style={{ marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={() => setSelectedTag(null)} style={{
-            padding: "6px 14px", borderRadius: 20, border: "1px solid var(--border)",
+        <div style={{ marginBottom: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={() => setSelectedTag(null)} className="tag-pill" style={{
             background: selectedTag === null ? "var(--text-primary)" : "var(--surface)",
             color: selectedTag === null ? "#fff" : "var(--text-secondary)",
-            fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font)",
+            borderColor: selectedTag === null ? "var(--text-primary)" : "var(--border)",
           }}>すべて</button>
           {allTags.map(([tag, count]) => (
-            <button key={tag} onClick={() => setSelectedTag(tag === selectedTag ? null : tag)} style={{
-              padding: "6px 14px", borderRadius: 20,
-              border: `1px solid ${selectedTag === tag ? TAG_COLORS[tag] : "var(--border)"}`,
+            <button key={tag} onClick={() => setSelectedTag(tag === selectedTag ? null : tag)} className="tag-pill" style={{
+              borderColor: selectedTag === tag ? TAG_COLORS[tag] : "var(--border)",
               background: selectedTag === tag ? TAG_COLORS[tag] + "15" : "var(--surface)",
               color: selectedTag === tag ? TAG_COLORS[tag] : "var(--text-secondary)",
-              fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font)",
-            }}>{tag} ({count})</button>
+            }}>{tag} <span style={{ opacity: 0.6 }}>{count}</span></button>
           ))}
         </div>
 
-        {/* 検索 */}
-        <input
-          placeholder="企業名・商品名で検索..."
-          value={search} onChange={(e) => setSearch(e.target.value)}
-          style={{
-            width: "100%", padding: "12px 16px", border: "1px solid var(--border)",
-            borderRadius: "var(--radius)", fontSize: 14, marginBottom: 16,
-            outline: "none", fontFamily: "var(--font)", background: "var(--surface)",
-          }}
-        />
-
         {/* 一覧 */}
-        <div className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 28 }}>
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "16px 20px 8px" }}>
-            <div className="section-label">全データ一覧</div>
+            <div className="section-label">価格変動一覧 {filtered.length > 0 && `(${filtered.length})`}</div>
           </div>
           {loading ? (
-            <div style={{ padding: 20, color: "var(--text-muted)" }}>読み込み中...</div>
+            <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>読み込み中...</div>
           ) : filtered.length === 0 ? (
-            <div style={{ padding: 20, color: "var(--text-muted)" }}>データがありません</div>
+            <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>該当データがありません</div>
           ) : (
             filtered.map((item) => {
               const dateLabel = displayDate(item);
               return (
                 <div key={item.id} className="list-row" onClick={() => router.push(`/company/${item.slug}`)}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontWeight: 600, fontSize: 14 }}>{item.company}</span>
-                      <span style={{
-                        fontSize: 10, padding: "2px 6px", borderRadius: 8,
-                        background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag],
-                        fontWeight: 700,
-                      }}>{item.tag}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                    <div className="avatar" style={{ background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag] }}>
+                      {item.company.slice(0, 1)}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
-                      {item.product}
-                      {dateLabel && <span> · 📅 {dateLabel}</span>}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontWeight: 700, fontSize: 14 }}>{item.company}</span>
+                        <span className="mini-tag" style={{ background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag] }}>{item.tag}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {item.product}{dateLabel && <span> · 📅 {dateLabel}</span>}
+                      </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
                     <div style={{ fontSize: 14 }}>
-                      <span style={{ color: "var(--text-muted)" }}>{item.old_price}円</span>
-                      <span style={{ margin: "0 6px", color: "var(--text-muted)" }}>→</span>
-                      <span style={{ fontWeight: 700 }}>{item.new_price}円</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: 12, textDecoration: "line-through" }}>{item.old_price}</span>
+                      <span style={{ fontWeight: 800, marginLeft: 6 }}>{item.new_price}円</span>
                     </div>
-                    <span className={item.diff > 0 ? "badge-up" : "badge-down"}>
+                    <span className={item.diff > 0 ? "badge-up" : "badge-down"} style={{ marginTop: 4 }}>
                       {item.diff > 0 ? "+" : ""}{item.percent.toFixed(1)}%
                     </span>
                   </div>

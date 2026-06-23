@@ -71,19 +71,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="nav-inner">
             <a href="/" className="nav-logo">NeageWatch</a>
             <ul className="nav-links">
-              <li><a href="/">ダッシュボード</a></li>
+              <li><a href="/">ホーム</a></li>
+              <li><a href="/calendar">カレンダー</a></li>
               <li><a href="/company">企業一覧</a></li>
               <li><a href="/analysis">分析</a></li>
-              <li><a href="/admin">管理</a></li>
             </ul>
           </div>
         </nav>
         {children}
         <footer className="footer">
           <div style={{ marginBottom: 8 }}>
-            <a href="/" style={{ margin: "0 12px", color: "var(--text-muted)", fontSize: 12 }}>ダッシュボード</a>
-            <a href="/company" style={{ margin: "0 12px", color: "var(--text-muted)", fontSize: 12 }}>企業一覧</a>
-            <a href="/analysis" style={{ margin: "0 12px", color: "var(--text-muted)", fontSize: 12 }}>分析</a>
+            <a href="/" style={{ margin: "0 10px", color: "var(--text-muted)", fontSize: 12 }}>ホーム</a>
+            <a href="/calendar" style={{ margin: "0 10px", color: "var(--text-muted)", fontSize: 12 }}>カレンダー</a>
+            <a href="/company" style={{ margin: "0 10px", color: "var(--text-muted)", fontSize: 12 }}>企業一覧</a>
+            <a href="/analysis" style={{ margin: "0 10px", color: "var(--text-muted)", fontSize: 12 }}>分析</a>
           </div>
           © 2026 NeageWatch - 日本の価格変動トラッカー
         </footer>

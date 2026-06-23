@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import ShareButtons from "@/components/ShareButtons";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,6 +49,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             {isUp ? "+" : ""}{percent.toFixed(1)}%
           </span>
         </div>
+
+        <ShareButtons
+          company={data.company}
+          product={data.product}
+          oldPrice={data.old_price}
+          newPrice={data.new_price}
+          percent={percent}
+        />
       </div>
 
       <div className="card">
