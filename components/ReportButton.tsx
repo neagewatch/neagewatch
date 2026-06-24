@@ -29,10 +29,9 @@ export default function ReportButton({ priceChangeId }: Props) {
         report_type: type,
         detail: detail.slice(0, 500),
       });
-      // 該当データの報告数をインクリメント（RPCがなければ握りつぶす）
       setSent(true);
     } catch {
-      setSent(true); // ユーザーには成功扱い
+      setSent(true);
     } finally {
       setSending(false);
     }
