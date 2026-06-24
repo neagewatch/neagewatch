@@ -36,7 +36,7 @@ export default function AdminPage() {
   const [articleDate, setArticleDate] = useState("");
   const [amount, setAmount] = useState("");
   const [msg, setMsg] = useState("");
-  const [reports, setReports] = useState<{ id: number; report_type: string; detail?: string; price_change_id: number; created_at: string }[]>([]);
+  const [reports, setReports] = useState<{ id: number; report_type: string; detail?: string; price_change_id: string; created_at: string }[]>([]);
 
   const fetchData = async () => {
     const { data } = await supabase.from("price_changes").select("*").order("id", { ascending: false });

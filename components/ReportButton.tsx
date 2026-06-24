@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Props = {
-  priceChangeId: string | number;
+  priceChangeId: string;
 };
 
 const TYPES = [
@@ -25,7 +25,7 @@ export default function ReportButton({ priceChangeId }: Props) {
     setSending(true);
     try {
       await supabase.from("reports").insert({
-        price_change_id: typeof priceChangeId === "string" ? parseInt(priceChangeId) : priceChangeId,
+        price_change_id: priceChangeId,
         report_type: type,
         detail: detail.slice(0, 500),
       });
