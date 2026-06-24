@@ -158,6 +158,10 @@ export const COMPANIES = {
   kao_merit: { name: "エステー", slug: "st_corp", category: "日用品", aliases: ["エステー"] },
   daio_paper: { name: "大王製紙（エリエール）", slug: "daio", category: "日用品", aliases: ["大王製紙", "エリエール"] },
   nepia: { name: "王子ネピア", slug: "nepia", category: "日用品", aliases: ["ネピア", "nepia"] },
+
+  // ===== 駄菓子・氷菓 =====
+  yaokin: { name: "やおきん", slug: "yaokin", category: "食品メーカー", aliases: ["やおきん", "うまい棒"] },
+  akagi: { name: "赤城乳業", slug: "akagi", category: "食品メーカー", aliases: ["赤城乳業", "ガリガリ君"] },
 } as const
 
 export type CompanyId = keyof typeof COMPANIES

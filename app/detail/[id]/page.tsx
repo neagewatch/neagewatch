@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import ShareButtons from "@/components/ShareButtons";
+import ReportButton from "@/components/ReportButton";
+import { formatDate } from "@/lib/format";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,6 +36,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <div className="card" style={{ marginTop: 12, marginBottom: 20 }}>
         <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600, marginBottom: 4 }}>{data.company}</div>
         <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>{data.product}</h1>
+        {data.amount && (
+          <div style={{ display: "inline-block", marginTop: 8, fontSize: 12, fontWeight: 700, padding: "3px 10px", background: "var(--accent-light)", color: "var(--accent)", borderRadius: 20 }}>
+            内容量 {data.amount}
+          </div>
+        )}
 
         <div style={{ marginTop: 24, display: "flex", alignItems: "baseline", gap: 12 }}>
           <span style={{ fontSize: 18, color: "var(--text-muted)" }}>{data.old_price}円</span>
@@ -73,13 +80,19 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           {data.change_date && (
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "10px 0", borderBottom: "1px solid var(--border-light)" }}>
               <span style={{ color: "var(--text-muted)" }}>値上げ日</span>
-              <span style={{ fontWeight: 600 }}>📅 {data.change_date}</span>
+              <span style={{ fontWeight: 600 }}>📅 {formatDate(data.change_date)}</span>
+            </div>
+          )}
+          {data.amount && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "10px 0", borderBottom: "1px solid var(--border-light)" }}>
+              <span style={{ color: "var(--text-muted)" }}>内容量</span>
+              <span style={{ fontWeight: 600 }}>{data.amount}</span>
             </div>
           )}
           {data.article_date && (
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "10px 0", borderBottom: "1px solid var(--border-light)" }}>
               <span style={{ color: "var(--text-muted)" }}>記事公開日</span>
-              <span style={{ fontWeight: 600 }}>{data.article_date}</span>
+              <span style={{ fontWeight: 600 }}>{formatDate(data.article_date)}</span>
             </div>
           )}
           {data.source_url && data.source_url !== "manual" && (
@@ -89,6 +102,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </div>
           )}
         </div>
+
+        <ReportButton priceChangeId={data.id} />
       </div>
     </div>
   );

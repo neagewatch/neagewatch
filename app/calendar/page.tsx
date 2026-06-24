@@ -51,7 +51,7 @@ export default function CalendarPage() {
 
   const grouped = useMemo(() => {
     const withDate = data
-      .map((item) => ({ ...item, dateObj: ymd(item.change_date || item.article_date) }))
+      .map((item) => ({ ...item, dateObj: ymd(item.change_date) }))
       .filter((item) => item.dateObj !== null) as (PriceChange & { dateObj: Date })[];
 
     const filtered = withDate.filter((item) =>

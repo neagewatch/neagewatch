@@ -379,6 +379,42 @@ a { color: inherit; text-decoration: none; }
   margin-top: 40px;
 }
 
+/* ===== 今日のサマリー ===== */
+.daily-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 12px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+.daily-item { text-align: center; flex: 1; text-decoration: none; }
+.daily-num { font-size: 28px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+.daily-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
+.daily-divider { width: 1px; height: 36px; background: var(--border); }
+
+/* ===== 衝撃ランキング ===== */
+.shock-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.shock-card {
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+  box-shadow: var(--shadow-md);
+}
+.shock-card:hover { transform: translateY(-3px) scale(1.01); box-shadow: var(--shadow-lg); }
+.shock-rank { font-size: 24px; margin-bottom: 6px; }
+
 /* ===== アニメーション ===== */
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 @keyframes pulse-ring {
@@ -412,4 +448,7 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 640px) {
   .analysis-grid-2 { grid-template-columns: 1fr !important; }
+  .shock-grid { grid-template-columns: 1fr; }
+  .shock-card { padding: 16px; }
+  .daily-num { font-size: 24px; }
 }

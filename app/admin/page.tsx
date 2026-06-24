@@ -16,6 +16,7 @@ type PriceChange = {
   article_text?: string;
   article_date?: string;
   change_date?: string;
+  amount?: string;
 };
 
 function formatDate(dateStr?: string): string {
@@ -31,13 +32,17 @@ export default function AdminPage() {
   const [product, setProduct] = useState("");
   const [oldPrice, setOldPrice] = useState("");
   const [newPrice, setNewPrice] = useState("");
-  const [changeDate, setChangeDate] = useState(new Date().toISOString().split("T")[0]);
-  const [articleDate, setArticleDate] = useState(new Date().toISOString().split("T")[0]);
+  const [changeDate, setChangeDate] = useState("");
+  const [articleDate, setArticleDate] = useState("");
+  const [amount, setAmount] = useState("");
   const [msg, setMsg] = useState("");
+  const [reports, setReports] = useState<{ id: number; report_type: string; detail?: string; price_change_id: number; created_at: string }[]>([]);
 
   const fetchData = async () => {
     const { data } = await supabase.from("price_changes").select("*").order("id", { ascending: false });
     setData(data || []);
+    const { data: rep } = await supabase.from("reports").select("*").eq("status", "open").order("created_at", { ascending: false });
+    if (rep) setReports(rep);
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -46,20 +51,22 @@ export default function AdminPage() {
     const companyKey = company as keyof typeof COMPANIES;
     const info = COMPANIES[companyKey];
     if (!info) { setMsg("企業を選択してください"); return; }
-    if (!product || !oldPrice || !newPrice) { setMsg("全項目を入力してください"); return; }
+    if (!product || !oldPrice || !newPrice) { setMsg("商品名・価格を入力してください"); return; }
 
     const { error } = await supabase.from("price_changes").insert({
       company: info.name, slug: info.slug, product,
       old_price: Number(oldPrice), new_price: Number(newPrice),
       change_type: Number(newPrice) > Number(oldPrice) ? "increase" : "decrease",
       source_url: "manual", article_text: "手動入力",
-      article_date: articleDate,
-      change_date: changeDate,
+      article_date: articleDate || null,
+      change_date: changeDate || null,
+      amount: amount || null,
+      is_verified: true,
     });
 
     if (error) { setMsg("エラー: " + error.message); return; }
     setMsg("追加しました");
-    setProduct(""); setOldPrice(""); setNewPrice("");
+    setProduct(""); setOldPrice(""); setNewPrice(""); setAmount("");
     fetchData();
   };
 
@@ -68,6 +75,18 @@ export default function AdminPage() {
     await supabase.from("price_changes").delete().eq("id", id);
     setMsg("削除しました");
     fetchData();
+  };
+
+  const resolveReport = async (id: number) => {
+    await supabase.from("reports").update({ status: "resolved" }).eq("id", id);
+    fetchData();
+  };
+
+  const reportLabel: Record<string, string> = {
+    wrong_price: "価格の誤り",
+    wrong_date: "日付の誤り",
+    wrong_amount: "内容量の誤り",
+    other: "その他",
   };
 
   const inputStyle: React.CSSProperties = {
@@ -93,6 +112,7 @@ export default function AdminPage() {
           <input placeholder="商品名" value={product} onChange={(e) => setProduct(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
           <input placeholder="旧価格" type="number" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} style={{ ...inputStyle, width: 100 }} />
           <input placeholder="新価格" type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} style={{ ...inputStyle, width: 100 }} />
+          <input placeholder="内容量(例:60g)" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ ...inputStyle, width: 130 }} />
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8, alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -103,6 +123,7 @@ export default function AdminPage() {
             <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>記事日:</label>
             <input type="date" value={articleDate} onChange={(e) => setArticleDate(e.target.value)} style={{ ...inputStyle, width: 150 }} />
           </div>
+          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>※日付は不明なら空欄でOK（表示されません）</span>
           <button onClick={handleAdd} style={{
             padding: "10px 24px", background: "var(--accent)", color: "#fff",
             border: "none", borderRadius: "var(--radius)", cursor: "pointer",
@@ -119,6 +140,32 @@ export default function AdminPage() {
         )}
       </div>
 
+      {reports.length > 0 && (
+        <div className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 28, border: "1px solid var(--up)" }}>
+          <div style={{ padding: "16px 20px 8px" }}>
+            <div className="section-label" style={{ color: "var(--up)" }}>🚩 ユーザーからの誤り報告 ({reports.length}件)</div>
+          </div>
+          {reports.map((r) => (
+            <div key={r.id} className="list-row">
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>
+                  {reportLabel[r.report_type] || r.report_type}
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 400, marginLeft: 8 }}>
+                    データID: {r.price_change_id}
+                  </span>
+                </div>
+                {r.detail && <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>{r.detail}</div>}
+              </div>
+              <button onClick={() => resolveReport(r.id)} style={{
+                padding: "6px 14px", background: "var(--down-bg)", color: "var(--down)",
+                border: "none", borderRadius: "var(--radius)", cursor: "pointer",
+                fontSize: 12, fontWeight: 700, fontFamily: "var(--font)",
+              }}>対応済み</button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ padding: "16px 20px 8px" }}>
           <div className="section-label">登録データ ({data.length}件)</div>
@@ -128,7 +175,7 @@ export default function AdminPage() {
             <div>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{item.company}</div>
               <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
-                {item.product} · {item.old_price}円 → {item.new_price}円
+                {item.product}{item.amount && ` (${item.amount})`} · {item.old_price}円 → {item.new_price}円
               </div>
               <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
                 {item.change_date && <span>📅 値上げ日: {formatDate(item.change_date)}</span>}

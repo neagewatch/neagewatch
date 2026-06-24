@@ -18,6 +18,7 @@ type PriceChange = {
   article_text?: string;
   article_date?: string;
   change_date?: string;
+  amount?: string;
 };
 
 type BotRun = {
@@ -29,10 +30,10 @@ type BotRun = {
   message?: string;
 };
 
-function formatDate(dateStr?: string): string {
+function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "";
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
+  if (isNaN(d.getTime())) return "";
   return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}`;
 }
 
@@ -50,10 +51,9 @@ function timeAgo(dateStr?: string): string {
   return `${day}日前`;
 }
 
+// 実施日のみ表示。情報がなければ空文字（今日で埋めない）
 function displayDate(item: PriceChange): string {
-  if (item.change_date) return formatDate(item.change_date);
-  if (item.article_date) return formatDate(item.article_date);
-  return "";
+  return formatDate(item.change_date);
 }
 
 export default function Home() {
@@ -117,6 +117,32 @@ export default function Home() {
     const map: Record<string, number> = {};
     enriched.forEach((d) => { map[d.tag] = (map[d.tag] || 0) + 1; });
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [enriched]);
+
+  // エンゲージメント: 今日/今週/今後の値上げ
+  const engagement = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const weekLater = new Date(today); weekLater.setDate(weekLater.getDate() + 7);
+    const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+    let todayCount = 0, thisWeekCount = 0, upcomingCount = 0;
+    enriched.forEach((d) => {
+      if (!d.change_date) return;
+      const cd = new Date(d.change_date); cd.setHours(0, 0, 0, 0);
+      if (isNaN(cd.getTime())) return;
+      if (cd.getTime() === today.getTime()) todayCount++;
+      if (cd >= weekAgo && cd <= today) thisWeekCount++;
+      if (cd > today && cd <= weekLater) upcomingCount++;
+    });
+    return { todayCount, thisWeekCount, upcomingCount };
+  }, [enriched]);
+
+  // 共有したくなる: 衝撃の値上げ率TOP3
+  const shockRanking = useMemo(() => {
+    return [...enriched]
+      .filter((d) => d.percent > 0)
+      .sort((a, b) => b.percent - a.percent)
+      .slice(0, 3);
   }, [enriched]);
 
   const lastRun = botRuns[0];
@@ -202,6 +228,45 @@ export default function Home() {
           </div>
         </div>
 
+        {/* 今日のサマリー（毎日見たくなる仕掛け） */}
+        <div className="daily-summary">
+          <div className="daily-item">
+            <div className="daily-num">{engagement.todayCount}</div>
+            <div className="daily-label">本日実施</div>
+          </div>
+          <div className="daily-divider" />
+          <div className="daily-item">
+            <div className="daily-num" style={{ color: "var(--up)" }}>{engagement.thisWeekCount}</div>
+            <div className="daily-label">直近7日</div>
+          </div>
+          <div className="daily-divider" />
+          <a href="/calendar" className="daily-item" style={{ cursor: "pointer" }}>
+            <div className="daily-num" style={{ color: "var(--accent)" }}>{engagement.upcomingCount}</div>
+            <div className="daily-label">今後7日の予定 →</div>
+          </a>
+        </div>
+
+        {/* 衝撃の値上げ率ランキング（共有したくなる仕掛け） */}
+        {shockRanking.length > 0 && (
+          <div style={{ marginBottom: 32 }}>
+            <div className="section-head">
+              <div className="section-label">😱 衝撃の値上げ率ランキング</div>
+            </div>
+            <div className="shock-grid">
+              {shockRanking.map((item, i) => (
+                <div key={item.id} className="shock-card" onClick={() => router.push(`/detail/${item.id}`)}
+                  style={{ background: ["linear-gradient(135deg,#ff6b6b,#ee5253)", "linear-gradient(135deg,#feca57,#ff9f43)", "linear-gradient(135deg,#54a0ff,#2e86de)"][i] }}>
+                  <div className="shock-rank">{["🥇", "🥈", "🥉"][i]}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, opacity: 0.95 }}>{item.company}</div>
+                  <div style={{ fontSize: 11, opacity: 0.85, marginBottom: 8, minHeight: 28 }}>{item.product.slice(0, 24)}</div>
+                  <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: -1 }}>+{item.percent.toFixed(0)}%</div>
+                  <div style={{ fontSize: 12, opacity: 0.9 }}>{item.old_price}円 → {item.new_price}円</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 最新速報（横スクロール） */}
         <div style={{ marginBottom: 32 }}>
           <div className="section-head">
@@ -221,6 +286,7 @@ export default function Home() {
                   </div>
                   <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 6, minHeight: 32 }}>
                     {item.product.slice(0, 28)}
+                    {item.amount && <span style={{ color: "var(--text-muted)" }}> ({item.amount})</span>}
                   </div>
                   {dateLabel && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>📅 {dateLabel}</div>}
                   <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -291,7 +357,7 @@ export default function Home() {
                         <span className="mini-tag" style={{ background: TAG_COLORS[item.tag] + "18", color: TAG_COLORS[item.tag] }}>{item.tag}</span>
                       </div>
                       <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {item.product}{dateLabel && <span> · 📅 {dateLabel}</span>}
+                        {item.product}{item.amount && <span> ({item.amount})</span>}{dateLabel && <span> · 📅 {dateLabel}</span>}
                       </div>
                     </div>
                   </div>

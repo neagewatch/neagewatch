@@ -17,19 +17,18 @@ type PriceChange = {
   article_text?: string;
   article_date?: string;
   change_date?: string;
+  amount?: string;
 };
 
-function formatDate(dateStr?: string): string {
+function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "";
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
+  if (isNaN(d.getTime())) return "";
   return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}`;
 }
 
 function displayDate(item: PriceChange): string {
-  if (item.change_date) return formatDate(item.change_date);
-  if (item.article_date) return formatDate(item.article_date);
-  return "";
+  return formatDate(item.change_date);
 }
 
 export default function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -142,15 +141,13 @@ export default function CompanyPage({ params }: { params: Promise<{ slug: string
           return (
             <div key={item.id} className="list-row" onClick={() => router.push(`/detail/${item.id}`)}>
               <div>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{item.product}</div>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>
+                  {item.product}
+                  {item.amount && <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 400 }}> ({item.amount})</span>}
+                </div>
                 {dateLabel && (
                   <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
                     📅 {dateLabel}
-                    {item.change_date && item.article_date && item.change_date !== item.article_date && (
-                      <span style={{ marginLeft: 8, fontSize: 10, color: "var(--text-muted)" }}>
-                        (記事: {formatDate(item.article_date)})
-                      </span>
-                    )}
                   </div>
                 )}
               </div>
