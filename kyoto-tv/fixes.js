@@ -1,0 +1,1 @@
+toggleFav=function(v){const had=isFav(v),k=key(v);favs=favs.filter(x=>x!==v.num&&x!==k);if(!had)favs.push(k);save();renderChannels();toast(had?'お気に入りから削除':'お気に入りに追加')};
